@@ -1,0 +1,510 @@
+<template id="formsTemplate">
+    <div class="container">
+        <div class="page-header">
+            <h1>Gestion des Formulaires</h1>
+            <div class="header-actions">
+                <button class="btn btn-primary" onclick="App.navigateTo('/forms/new')">
+                    <i class="fas fa-plus"></i> Nouveau Formulaire
+                </button>
+            </div>
+        </div>
+
+        <div class="filters">
+            <div class="search-bar">
+                <input type="text" id="searchForms" placeholder="Rechercher un formulaire..." class="form-control">
+                <i class="fas fa-search"></i>
+            </div>
+            <div class="filter-options">
+                <select id="statusFilter" class="form-control">
+                    <option value="">Tous les statuts</option>
+                    <option value="active">Actif</option>
+                    <option value="draft">Brouillon</option>
+                    <option value="archived">Archivé</option>
+                </select>
+                <select id="subsiteFilter" class="form-control">
+                    <option value="">Tous les sous-sites</option>
+                    <!-- Populated dynamically -->
+                </select>
+            </div>
+        </div>
+
+        <div class="forms-grid" id="formsGrid">
+            <!-- Forms will be dynamically inserted here -->
+            <div class="loading">Chargement des formulaires...</div>
+        </div>
+    </div>
+
+    <script>
+        (async function() {
+            const formsGrid = document.getElementById('formsGrid');
+            const searchInput = document.getElementById('searchForms');
+            const statusFilter = document.getElementById('statusFilter');
+            const subsiteFilter = document.getElementById('subsiteFilter');
+
+            let forms = [];
+            let subsites = [];
+
+            // Initialize filters
+            async function initializeFilters() {
+                try {
+                    // Load subsites for filter
+                    subsites = await API.getSubsites();
+                    subsiteFilter.innerHTML += subsites.map(site =>
+                        `<option value="${site.id}">${Utils.sanitizeHTML(site.name)}</option>`
+                    ).join('');
+
+                    // Set up filter event listeners
+                    const filterForms = Utils.debounce(() => {
+                        const searchTerm = searchInput.value.toLowerCase();
+                        const statusValue = statusFilter.value;
+                        const subsiteValue = subsiteFilter.value;
+
+                        const filtered = forms.filter(form => {
+                            const matchesSearch = form.title.toLowerCase().includes(searchTerm) ||
+                                               form.description.toLowerCase().includes(searchTerm);
+                            const matchesStatus = !statusValue || form.status === statusValue;
+                            const matchesSubsite = !subsiteValue || form.subsite_id === parseInt(subsiteValue);
+                            return matchesSearch && matchesStatus && matchesSubsite;
+                        });
+
+                        renderForms(filtered);
+                    }, 300);
+
+                    searchInput.addEventListener('input', filterForms);
+                    statusFilter.addEventListener('change', filterForms);
+                    subsiteFilter.addEventListener('change', filterForms);
+
+                } catch (error) {
+                    console.error('Error initializing filters:', error);
+                    Utils.showNotification('Erreur lors du chargement des filtres', 'error');
+                }
+            }
+
+            // Render forms to grid
+            function renderForms(formsToRender) {
+                if (!formsToRender.length) {
+                    formsGrid.innerHTML = '<div class="no-results">Aucun formulaire trouvé</div>';
+                    return;
+                }
+
+                formsGrid.innerHTML = formsToRender.map(form => `
+                    <div class="form-card ${form.status}">
+                        <div class="form-card-header">
+                            <h3>${Utils.sanitizeHTML(form.title)}</h3>
+                            <span class="status-badge ${form.status}">
+                                ${getStatusLabel(form.status)}
+                            </span>
+                        </div>
+                        <div class="form-card-body">
+                            <p>${Utils.sanitizeHTML(form.description)}</p>
+                            <div class="form-meta">
+                                <span><i class="fas fa-building"></i> ${Utils.sanitizeHTML(getSubsiteName(form.subsite_id))}</span>
+                                <span><i class="fas fa-clock"></i> ${Utils.formatDate(form.updated_at)}</span>
+                            </div>
+                        </div>
+                        <div class="form-card-actions">
+                            <button class="btn btn-icon" onclick="viewForm(${form.id})" title="Voir">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            ${Auth.hasPermission('edit_forms') ? `
+                                <button class="btn btn-icon" onclick="editForm(${form.id})" title="Éditer">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-icon ${form.status === 'archived' ? 'restore' : 'archive'}"
+                                        onclick="toggleArchiveForm(${form.id})"
+                                        title="${form.status === 'archived' ? 'Restaurer' : 'Archiver'}">
+                                    <i class="fas fa-${form.status === 'archived' ? 'undo' : 'archive'}"></i>
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // Helper functions
+            function getStatusLabel(status) {
+                const labels = {
+                    'active': 'Actif',
+                    'draft': 'Brouillon',
+                    'archived': 'Archivé'
+                };
+                return labels[status] || status;
+            }
+
+            function getSubsiteName(subsiteId) {
+                const subsite = subsites.find(s => s.id === subsiteId);
+                return subsite ? subsite.name : 'N/A';
+            }
+
+            // Form actions
+            window.viewForm = (formId) => {
+                App.navigateTo(`/forms/${formId}`);
+            };
+
+            window.editForm = (formId) => {
+                App.navigateTo(`/forms/${formId}/edit`);
+            };
+
+            window.toggleArchiveForm = async (formId) => {
+                try {
+                    const form = forms.find(f => f.id === formId);
+                    const newStatus = form.status === 'archived' ? 'active' : 'archived';
+                    await API.updateForm(formId, { status: newStatus });
+
+                    // Update local data and re-render
+                    form.status = newStatus;
+                    renderForms(forms);
+
+                    Utils.showNotification(
+                        `Formulaire ${newStatus === 'archived' ? 'archivé' : 'restauré'} avec succès`,
+                        'success'
+                    );
+                } catch (error) {
+                    console.error('Error toggling form archive status:', error);
+                    Utils.showNotification('Erreur lors de la modification du statut', 'error');
+                }
+            };
+
+            // Initialize page
+            try {
+                forms = await API.getForms();
+                await initializeFilters();
+                renderForms(forms);
+            } catch (error) {
+                console.error('Error loading forms:', error);
+                Utils.showNotification('Erreur lors du chargement des formulaires', 'error');
+                formsGrid.innerHTML = '<div class="error">Erreur lors du chargement des formulaires</div>';
+            }
+        })();
+    </script>
+</template>
+
+<template id="formEditorTemplate">
+    <div class="container form-editor">
+        <div class="page-header">
+            <h1 id="formTitle">Nouveau Formulaire</h1>
+            <div class="header-actions">
+                <button class="btn btn-secondary" onclick="App.navigateTo('/forms')">
+                    <i class="fas fa-times"></i> Annuler
+                </button>
+                <button class="btn btn-primary" onclick="saveForm()">
+                    <i class="fas fa-save"></i> Enregistrer
+                </button>
+            </div>
+        </div>
+
+        <div class="editor-grid">
+            <div class="editor-main">
+                <div class="form-group">
+                    <label for="formName">Nom du formulaire</label>
+                    <input type="text" id="formName" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="formDescription">Description</label>
+                    <textarea id="formDescription" class="form-control" rows="3"></textarea>
+                </div>
+
+                <div class="form-fields" id="formFields">
+                    <h3>Champs du formulaire</h3>
+                    <div class="fields-list" id="fieldsList">
+                        <!-- Fields will be dynamically added here -->
+                    </div>
+                    <button class="btn btn-outline" onclick="addField()">
+                        <i class="fas fa-plus"></i> Ajouter un champ
+                    </button>
+                </div>
+            </div>
+
+            <div class="editor-sidebar">
+                <div class="form-settings">
+                    <h3>Paramètres</h3>
+
+                    <div class="form-group">
+                        <label for="formSubsite">Sous-site</label>
+                        <select id="formSubsite" class="form-control" required>
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="formStatus">Statut</label>
+                        <select id="formStatus" class="form-control">
+                            <option value="draft">Brouillon</option>
+                            <option value="active">Actif</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="formNotifications">
+                            Activer les notifications
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-preview">
+                    <h3>Aperçu</h3>
+                    <div class="preview-container" id="formPreview">
+                        <!-- Preview will be rendered here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentForm = null;
+        let formFields = [];
+
+        async function initializeEditor() {
+            try {
+                // Load subsites for dropdown
+                const subsites = await API.getSubsites();
+                const subsiteSelect = document.getElementById('formSubsite');
+                subsiteSelect.innerHTML = subsites.map(site =>
+                    `<option value="${site.id}">${Utils.sanitizeHTML(site.name)}</option>`
+                ).join('');
+
+                // Check if we're editing an existing form
+                const formId = window.location.pathname.match(/\/forms\/(\d+)\/edit/)?.[1];
+                if (formId) {
+                    currentForm = await API.getForm(formId);
+                    populateForm(currentForm);
+                }
+
+                // Set up form preview updates
+                const updatePreview = Utils.debounce(() => {
+                    renderPreview();
+                }, 500);
+
+                document.getElementById('formName').addEventListener('input', updatePreview);
+                document.getElementById('formDescription').addEventListener('input', updatePreview);
+
+                // Initial preview
+                renderPreview();
+
+            } catch (error) {
+                console.error('Error initializing form editor:', error);
+                Utils.showNotification('Erreur lors de l\'initialisation de l\'éditeur', 'error');
+            }
+        }
+
+        function populateForm(form) {
+            document.getElementById('formTitle').textContent = 'Modifier le Formulaire';
+            document.getElementById('formName').value = form.title;
+            document.getElementById('formDescription').value = form.description;
+            document.getElementById('formSubsite').value = form.subsite_id;
+            document.getElementById('formStatus').value = form.status;
+            document.getElementById('formNotifications').checked = form.notifications_enabled;
+
+            formFields = form.fields;
+            renderFields();
+        }
+
+        function renderFields() {
+            const fieldsList = document.getElementById('fieldsList');
+            fieldsList.innerHTML = formFields.map((field, index) => `
+                <div class="field-item" draggable="true" data-field-index="${index}">
+                    <div class="field-header">
+                        <span class="field-type">
+                            <i class="fas ${getFieldTypeIcon(field.type)}"></i>
+                            ${getFieldTypeLabel(field.type)}
+                        </span>
+                        <div class="field-actions">
+                            <button class="btn btn-icon" onclick="editField(${index})" title="Éditer">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-icon" onclick="removeField(${index})" title="Supprimer">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="field-preview">
+                        <label>${Utils.sanitizeHTML(field.label)}</label>
+                        ${renderFieldPreview(field)}
+                    </div>
+                </div>
+            `).join('');
+
+            // Set up drag and drop reordering
+            setupDragAndDrop();
+        }
+
+        function renderPreview() {
+            const preview = document.getElementById('formPreview');
+            const form = {
+                title: document.getElementById('formName').value,
+                description: document.getElementById('formDescription').value,
+                fields: formFields
+            };
+
+            preview.innerHTML = `
+                <h4>${Utils.sanitizeHTML(form.title)}</h4>
+                <p>${Utils.sanitizeHTML(form.description)}</p>
+                <form class="preview-form">
+                    ${formFields.map(field => `
+                        <div class="form-group">
+                            <label>${Utils.sanitizeHTML(field.label)}</label>
+                            ${renderFieldPreview(field)}
+                        </div>
+                    `).join('')}
+                </form>
+            `;
+        }
+
+        function renderFieldPreview(field) {
+            switch (field.type) {
+                case 'text':
+                case 'email':
+                case 'tel':
+                case 'number':
+                    return `<input type="${field.type}" class="form-control" placeholder="${field.placeholder || ''}" ${field.required ? 'required' : ''}>`;
+                case 'textarea':
+                    return `<textarea class="form-control" rows="3" placeholder="${field.placeholder || ''}" ${field.required ? 'required' : ''}></textarea>`;
+                case 'select':
+                    return `
+                        <select class="form-control" ${field.required ? 'required' : ''}>
+                            <option value="">Sélectionner...</option>
+                            ${field.options.map(opt => `
+                                <option value="${opt.value}">${opt.label}</option>
+                            `).join('')}
+                        </select>
+                    `;
+                case 'checkbox':
+                    return `<input type="checkbox" class="form-check-input" ${field.required ? 'required' : ''}>`;
+                case 'radio':
+                    return field.options.map(opt => `
+                        <div class="form-check">
+                            <input type="radio" name="field_${field.id}" value="${opt.value}" class="form-check-input" ${field.required ? 'required' : ''}>
+                            <label class="form-check-label">${opt.label}</label>
+                        </div>
+                    `).join('');
+                case 'file':
+                    return `<input type="file" class="form-control" ${field.multiple ? 'multiple' : ''} ${field.required ? 'required' : ''}>`;
+                default:
+                    return `<input type="text" class="form-control" ${field.required ? 'required' : ''}>`;
+            }
+        }
+
+        function getFieldTypeIcon(type) {
+            const icons = {
+                'text': 'fa-font',
+                'textarea': 'fa-paragraph',
+                'email': 'fa-envelope',
+                'tel': 'fa-phone',
+                'number': 'fa-hashtag',
+                'select': 'fa-list',
+                'checkbox': 'fa-check-square',
+                'radio': 'fa-dot-circle',
+                'file': 'fa-file-upload'
+            };
+            return icons[type] || 'fa-question';
+        }
+
+        function getFieldTypeLabel(type) {
+            const labels = {
+                'text': 'Texte court',
+                'textarea': 'Texte long',
+                'email': 'Email',
+                'tel': 'Téléphone',
+                'number': 'Nombre',
+                'select': 'Liste déroulante',
+                'checkbox': 'Case à cocher',
+                'radio': 'Boutons radio',
+                'file': 'Fichier'
+            };
+            return labels[type] || type;
+        }
+
+        window.addField = () => {
+            // Show field type selection modal
+            // Implementation depends on your modal system
+        };
+
+        window.editField = (index) => {
+            // Show field editor modal with current field data
+            // Implementation depends on your modal system
+        };
+
+        window.removeField = (index) => {
+            formFields.splice(index, 1);
+            renderFields();
+            renderPreview();
+        };
+
+        function setupDragAndDrop() {
+            const fieldItems = document.querySelectorAll('.field-item');
+
+            fieldItems.forEach(item => {
+                item.addEventListener('dragstart', e => {
+                    e.dataTransfer.setData('text/plain', item.dataset.fieldIndex);
+                    item.classList.add('dragging');
+                });
+
+                item.addEventListener('dragend', () => {
+                    item.classList.remove('dragging');
+                });
+
+                item.addEventListener('dragover', e => {
+                    e.preventDefault();
+                    const dragging = document.querySelector('.dragging');
+                    if (dragging && dragging !== item) {
+                        const container = document.getElementById('fieldsList');
+                        const afterElement = getDragAfterElement(container, e.clientY);
+
+                        if (afterElement) {
+                            container.insertBefore(dragging, afterElement);
+                        } else {
+                            container.appendChild(dragging);
+                        }
+                    }
+                });
+            });
+        }
+
+        function getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('.field-item:not(.dragging)')];
+
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+
+        window.saveForm = async () => {
+            try {
+                const formData = {
+                    title: document.getElementById('formName').value,
+                    description: document.getElementById('formDescription').value,
+                    subsite_id: parseInt(document.getElementById('formSubsite').value),
+                    status: document.getElementById('formStatus').value,
+                    notifications_enabled: document.getElementById('formNotifications').checked,
+                    fields: formFields
+                };
+
+                if (currentForm) {
+                    await API.updateForm(currentForm.id, formData);
+                    Utils.showNotification('Formulaire mis à jour avec succès', 'success');
+                } else {
+                    await API.createForm(formData);
+                    Utils.showNotification('Formulaire créé avec succès', 'success');
+                }
+
+                App.navigateTo('/forms');
+            } catch (error) {
+                console.error('Error saving form:', error);
+                Utils.showNotification('Erreur lors de l\'enregistrement du formulaire', 'error');
+            }
+        };
+
+        // Initialize the editor when the template is loaded
+        initializeEditor();
+    </script>
+</template>

@@ -1,0 +1,137 @@
+<template id="homeTemplate">
+    <div class="container">
+        <div class="welcome-section">
+            <h1>Bienvenue sur Form</h1>
+            <p class="lead">Plateforme de gestion de formulaires multi-sites</p>
+        </div>
+
+        <div class="dashboard" id="dashboard">
+            <!-- Dashboard content will be dynamically inserted here based on user role -->
+        </div>
+
+        <div class="quick-actions">
+            <h2>Actions rapides</h2>
+            <div class="action-grid">
+                <div class="action-card" data-href="/forms/new">
+                    <i class="fas fa-plus-circle"></i>
+                    <h3>Nouveau Formulaire</h3>
+                    <p>Créer un nouveau formulaire</p>
+                </div>
+                <div class="action-card" data-href="/messages">
+                    <i class="fas fa-envelope"></i>
+                    <h3>Messages</h3>
+                    <p>Consulter vos messages</p>
+                </div>
+                <div class="action-card" data-href="/tickets">
+                    <i class="fas fa-ticket-alt"></i>
+                    <h3>Support</h3>
+                    <p>Ouvrir un ticket</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-section">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <i class="fas fa-file-alt"></i>
+                    <div class="stat-content">
+                        <h4>Formulaires</h4>
+                        <span class="stat-number" id="formCount">-</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-users"></i>
+                    <div class="stat-content">
+                        <h4>Utilisateurs</h4>
+                        <span class="stat-number" id="userCount">-</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-building"></i>
+                    <div class="stat-content">
+                        <h4>Sous-sites</h4>
+                        <span class="stat-number" id="subsiteCount">-</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-clock"></i>
+                    <div class="stat-content">
+                        <h4>Activité</h4>
+                        <span class="stat-text" id="lastActivity">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="recent-activity">
+            <h2>Activité récente</h2>
+            <div class="activity-list" id="activityList">
+                <!-- Activity items will be dynamically inserted here -->
+                <div class="loading">Chargement de l'activité...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize home page
+        (async function() {
+            try {
+                // Load dashboard data
+                const stats = await API.getDashboardStats();
+
+                // Update statistics
+                document.getElementById('formCount').textContent = stats.formCount;
+                document.getElementById('userCount').textContent = stats.userCount;
+                document.getElementById('subsiteCount').textContent = stats.subsiteCount;
+                document.getElementById('lastActivity').textContent = Utils.formatDate(stats.lastActivity);
+
+                // Load and display recent activity
+                const activities = await API.getRecentActivity();
+                const activityList = document.getElementById('activityList');
+
+                if (activities.length > 0) {
+                    activityList.innerHTML = activities.map(activity => `
+                        <div class="activity-item">
+                            <div class="activity-icon">
+                                <i class="fas ${getActivityIcon(activity.type)}"></i>
+                            </div>
+                            <div class="activity-content">
+                                <p>${Utils.sanitizeHTML(activity.description)}</p>
+                                <span class="activity-time">${Utils.formatDate(activity.timestamp)}</span>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    activityList.innerHTML = '<div class="no-activity">Aucune activité récente</div>';
+                }
+
+                // Initialize quick action cards
+                document.querySelectorAll('.action-card').forEach(card => {
+                    card.addEventListener('click', () => {
+                        const href = card.getAttribute('data-href');
+                        if (href) {
+                            App.navigateTo(href);
+                        }
+                    });
+                });
+
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+                Utils.showNotification('Erreur lors du chargement du tableau de bord', 'error');
+            }
+        })();
+
+        // Helper function to get activity icon
+        function getActivityIcon(type) {
+            const icons = {
+                'form_created': 'fa-file-plus',
+                'form_updated': 'fa-file-edit',
+                'user_created': 'fa-user-plus',
+                'message_sent': 'fa-paper-plane',
+                'ticket_created': 'fa-ticket',
+                'default': 'fa-circle'
+            };
+            return icons[type] || icons.default;
+        }
+    </script>
+</template>

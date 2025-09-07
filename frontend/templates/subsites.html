@@ -1,0 +1,412 @@
+<template id="subsitesTemplate">
+    <div class="container subsites-container">
+        <div class="page-header">
+            <h1>Gestion des Sous-sites</h1>
+            <div class="header-actions">
+                <button class="btn btn-primary" onclick="showNewSubsiteForm()">
+                    <i class="fas fa-plus"></i> Nouveau Sous-site
+                </button>
+            </div>
+        </div>
+
+        <div class="subsites-grid">
+            <!-- Subsites List -->
+            <div class="subsites-list">
+                <div class="search-bar">
+                    <input type="text" id="searchSubsites" placeholder="Rechercher un sous-site..." class="form-control">
+                    <i class="fas fa-search"></i>
+                </div>
+                <div class="subsites-cards" id="subsitesCards">
+                    <!-- Subsites will be dynamically inserted here -->
+                    <div class="loading">Chargement des sous-sites...</div>
+                </div>
+            </div>
+
+            <!-- Subsite Details -->
+            <div class="subsite-details" id="subsiteDetails">
+                <div class="subsite-placeholder">
+                    <i class="fas fa-building"></i>
+                    <p>Sélectionnez un sous-site pour voir les détails</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- New/Edit Subsite Modal -->
+        <div class="modal" id="subsiteModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 id="modalTitle">Nouveau Sous-site</h3>
+                    <button class="close-modal" onclick="closeSubsiteForm()">×</button>
+                </div>
+                <div class="modal-body">
+                    <form id="subsiteForm">
+                        <div class="form-group">
+                            <label for="subsiteName">Nom</label>
+                            <input type="text" id="subsiteName" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="subsiteCode">Code</label>
+                            <input type="text" id="subsiteCode" class="form-control" required
+                                   pattern="[a-z0-9-]+" title="Lettres minuscules, chiffres et tirets uniquement">
+                            <small class="form-text text-muted">
+                                Utilisé pour l'URL (ex: monsite.com/sous-site)
+                            </small>
+                        </div>
+                        <div class="form-group">
+                            <label for="subsiteDescription">Description</label>
+                            <textarea id="subsiteDescription" class="form-control" rows="3"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="subsiteLogo">Logo</label>
+                            <input type="file" id="subsiteLogo" class="form-control" accept="image/*">
+                            <small class="form-text text-muted">
+                                Format recommandé: PNG/SVG, max 2MB
+                            </small>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col">
+                                <label for="subsiteTheme">Thème</label>
+                                <select id="subsiteTheme" class="form-control">
+                                    <option value="default">Par défaut</option>
+                                    <option value="light">Clair</option>
+                                    <option value="dark">Sombre</option>
+                                    <option value="custom">Personnalisé</option>
+                                </select>
+                            </div>
+                            <div class="form-group col">
+                                <label for="subsiteLocale">Langue</label>
+                                <select id="subsiteLocale" class="form-control">
+                                    <option value="fr">Français</option>
+                                    <option value="en">English</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="theme-colors" id="themeColors" style="display: none;">
+                            <div class="form-row">
+                                <div class="form-group col">
+                                    <label for="primaryColor">Couleur principale</label>
+                                    <input type="color" id="primaryColor" class="form-control">
+                                </div>
+                                <div class="form-group col">
+                                    <label for="secondaryColor">Couleur secondaire</label>
+                                    <input type="color" id="secondaryColor" class="form-control">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="subsiteActive" checked>
+                                Site actif
+                            </label>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" onclick="closeSubsiteForm()">Annuler</button>
+                            <button type="submit" class="btn btn-primary">Enregistrer</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let subsites = [];
+        let currentSubsite = null;
+
+        async function initializeSubsites() {
+            try {
+                // Load subsites
+                subsites = await API.getSubsites();
+                renderSubsites();
+
+                // Set up search functionality
+                const searchInput = document.getElementById('searchSubsites');
+                searchInput.addEventListener('input', Utils.debounce(() => {
+                    const searchTerm = searchInput.value.toLowerCase();
+                    filterSubsites(searchTerm);
+                }, 300));
+
+                // Set up theme selection
+                document.getElementById('subsiteTheme').addEventListener('change', (e) => {
+                    document.getElementById('themeColors').style.display =
+                        e.target.value === 'custom' ? 'block' : 'none';
+                });
+
+                // Set up subsite form
+                document.getElementById('subsiteForm').addEventListener('submit', handleSubsiteSubmit);
+
+            } catch (error) {
+                console.error('Error initializing subsites:', error);
+                Utils.showNotification('Erreur lors du chargement des sous-sites', 'error');
+            }
+        }
+
+        function renderSubsites(filteredSubsites = null) {
+            const cards = document.getElementById('subsitesCards');
+            const subsitesToRender = filteredSubsites || subsites;
+
+            if (!subsitesToRender.length) {
+                cards.innerHTML = '<div class="no-subsites">Aucun sous-site trouvé</div>';
+                return;
+            }
+
+            cards.innerHTML = subsitesToRender.map(site => `
+                <div class="subsite-card ${!site.active ? 'inactive' : ''}"
+                     onclick="loadSubsite(${site.id})">
+                    <div class="subsite-logo">
+                        ${site.logo_url ?
+                            `<img src="${site.logo_url}" alt="${Utils.sanitizeHTML(site.name)}">` :
+                            '<i class="fas fa-building"></i>'
+                        }
+                    </div>
+                    <div class="subsite-info">
+                        <h3>${Utils.sanitizeHTML(site.name)}</h3>
+                        <p class="subsite-code">${site.code}</p>
+                        <div class="subsite-meta">
+                            <span class="status-badge ${site.active ? 'active' : 'inactive'}">
+                                ${site.active ? 'Actif' : 'Inactif'}
+                            </span>
+                            <span class="theme-badge">
+                                <i class="fas fa-palette"></i>
+                                ${getThemeLabel(site.theme)}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterSubsites(searchTerm) {
+            if (!searchTerm) {
+                renderSubsites();
+                return;
+            }
+
+            const filtered = subsites.filter(site =>
+                site.name.toLowerCase().includes(searchTerm) ||
+                site.code.toLowerCase().includes(searchTerm) ||
+                site.description?.toLowerCase().includes(searchTerm)
+            );
+
+            renderSubsites(filtered);
+        }
+
+        async function loadSubsite(subsiteId) {
+            try {
+                currentSubsite = await API.getSubsite(subsiteId);
+                const stats = await API.getSubsiteStats(subsiteId);
+
+                const details = document.getElementById('subsiteDetails');
+                details.innerHTML = `
+                    <div class="details-header">
+                        <div class="details-title">
+                            ${currentSubsite.logo_url ?
+                                `<img src="${currentSubsite.logo_url}" alt="${Utils.sanitizeHTML(currentSubsite.name)}">` :
+                                '<i class="fas fa-building"></i>'
+                            }
+                            <h2>${Utils.sanitizeHTML(currentSubsite.name)}</h2>
+                        </div>
+                        <div class="details-actions">
+                            <button class="btn btn-primary" onclick="editSubsite(${currentSubsite.id})">
+                                <i class="fas fa-edit"></i> Modifier
+                            </button>
+                            <button class="btn btn-${currentSubsite.active ? 'warning' : 'success'}"
+                                    onclick="toggleSubsiteActive(${currentSubsite.id})">
+                                <i class="fas fa-${currentSubsite.active ? 'pause' : 'play'}"></i>
+                                ${currentSubsite.active ? 'Suspendre' : 'Activer'}
+                            </button>
+                        </div>
+                    </div>
+                    <div class="details-content">
+                        <div class="details-section">
+                            <h3>Informations</h3>
+                            <div class="info-grid">
+                                <div class="info-item">
+                                    <span class="label">Code:</span>
+                                    <span>${currentSubsite.code}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="label">URL:</span>
+                                    <span>${window.location.origin}/${currentSubsite.code}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="label">Thème:</span>
+                                    <span>${getThemeLabel(currentSubsite.theme)}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="label">Langue:</span>
+                                    <span>${getLocaleLabel(currentSubsite.locale)}</span>
+                                </div>
+                            </div>
+                            ${currentSubsite.description ? `
+                                <div class="description">
+                                    <h4>Description</h4>
+                                    <p>${Utils.sanitizeHTML(currentSubsite.description)}</p>
+                                </div>
+                            ` : ''}
+                        </div>
+                        <div class="details-section">
+                            <h3>Statistiques</h3>
+                            <div class="stats-grid">
+                                <div class="stat-card">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-users"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <span class="stat-value">${stats.userCount}</span>
+                                        <span class="stat-label">Utilisateurs</span>
+                                    </div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-file-alt"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <span class="stat-value">${stats.formCount}</span>
+                                        <span class="stat-label">Formulaires</span>
+                                    </div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-paper-plane"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <span class="stat-value">${stats.submissionCount}</span>
+                                        <span class="stat-label">Soumissions</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Error loading subsite:', error);
+                Utils.showNotification('Erreur lors du chargement du sous-site', 'error');
+            }
+        }
+
+        function getThemeLabel(theme) {
+            const labels = {
+                'default': 'Par défaut',
+                'light': 'Clair',
+                'dark': 'Sombre',
+                'custom': 'Personnalisé'
+            };
+            return labels[theme] || theme;
+        }
+
+        function getLocaleLabel(locale) {
+            const labels = {
+                'fr': 'Français',
+                'en': 'English'
+            };
+            return labels[locale] || locale;
+        }
+
+        window.showNewSubsiteForm = () => {
+            currentSubsite = null;
+            document.getElementById('modalTitle').textContent = 'Nouveau Sous-site';
+            document.getElementById('subsiteForm').reset();
+            document.getElementById('subsiteModal').style.display = 'block';
+            document.getElementById('themeColors').style.display = 'none';
+        };
+
+        window.editSubsite = async (subsiteId) => {
+            try {
+                currentSubsite = await API.getSubsite(subsiteId);
+                document.getElementById('modalTitle').textContent = 'Modifier Sous-site';
+                document.getElementById('subsiteName').value = currentSubsite.name;
+                document.getElementById('subsiteCode').value = currentSubsite.code;
+                document.getElementById('subsiteDescription').value = currentSubsite.description || '';
+                document.getElementById('subsiteTheme').value = currentSubsite.theme;
+                document.getElementById('subsiteLocale').value = currentSubsite.locale;
+                document.getElementById('subsiteActive').checked = currentSubsite.active;
+
+                if (currentSubsite.theme === 'custom') {
+                    document.getElementById('themeColors').style.display = 'block';
+                    document.getElementById('primaryColor').value = currentSubsite.theme_colors?.primary || '#000000';
+                    document.getElementById('secondaryColor').value = currentSubsite.theme_colors?.secondary || '#000000';
+                } else {
+                    document.getElementById('themeColors').style.display = 'none';
+                }
+
+                document.getElementById('subsiteModal').style.display = 'block';
+            } catch (error) {
+                console.error('Error loading subsite for edit:', error);
+                Utils.showNotification('Erreur lors du chargement du sous-site', 'error');
+            }
+        };
+
+        window.closeSubsiteForm = () => {
+            document.getElementById('subsiteModal').style.display = 'none';
+            document.getElementById('subsiteForm').reset();
+        };
+
+        async function handleSubsiteSubmit(event) {
+            event.preventDefault();
+
+            const formData = new FormData();
+            formData.append('name', document.getElementById('subsiteName').value);
+            formData.append('code', document.getElementById('subsiteCode').value);
+            formData.append('description', document.getElementById('subsiteDescription').value);
+            formData.append('theme', document.getElementById('subsiteTheme').value);
+            formData.append('locale', document.getElementById('subsiteLocale').value);
+            formData.append('active', document.getElementById('subsiteActive').checked);
+
+            const logo = document.getElementById('subsiteLogo').files[0];
+            if (logo) {
+                formData.append('logo', logo);
+            }
+
+            if (document.getElementById('subsiteTheme').value === 'custom') {
+                formData.append('theme_colors', JSON.stringify({
+                    primary: document.getElementById('primaryColor').value,
+                    secondary: document.getElementById('secondaryColor').value
+                }));
+            }
+
+            try {
+                if (currentSubsite) {
+                    await API.updateSubsite(currentSubsite.id, formData);
+                    const index = subsites.findIndex(s => s.id === currentSubsite.id);
+                    subsites[index] = { ...currentSubsite, ...formData };
+                    Utils.showNotification('Sous-site mis à jour avec succès', 'success');
+                } else {
+                    const newSubsite = await API.createSubsite(formData);
+                    subsites.unshift(newSubsite);
+                    Utils.showNotification('Sous-site créé avec succès', 'success');
+                }
+
+                renderSubsites();
+                closeSubsiteForm();
+
+            } catch (error) {
+                console.error('Error saving subsite:', error);
+                Utils.showNotification('Erreur lors de l\'enregistrement du sous-site', 'error');
+            }
+        }
+
+        async function toggleSubsiteActive(subsiteId) {
+            try {
+                const site = subsites.find(s => s.id === subsiteId);
+                await API.updateSubsite(subsiteId, { active: !site.active });
+
+                site.active = !site.active;
+                renderSubsites();
+                await loadSubsite(subsiteId);
+
+                Utils.showNotification(
+                    `Sous-site ${site.active ? 'activé' : 'désactivé'} avec succès`,
+                    'success'
+                );
+
+            } catch (error) {
+                console.error('Error toggling subsite status:', error);
+                Utils.showNotification('Erreur lors de la modification du statut', 'error');
+            }
+        }
+
+        // Initialize subsites when template is loaded
+        initializeSubsites();
+    </script>
+</template>

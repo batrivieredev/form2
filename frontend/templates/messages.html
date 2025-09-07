@@ -1,0 +1,267 @@
+<template id="messagesTemplate">
+    <div class="container messages-container">
+        <div class="messages-grid">
+            <!-- Message List Sidebar -->
+            <div class="messages-list">
+                <div class="messages-header">
+                    <h2>Messages</h2>
+                    <button class="btn btn-primary" onclick="showNewMessageForm()">
+                        <i class="fas fa-pen"></i> Nouveau
+                    </button>
+                </div>
+
+                <div class="messages-search">
+                    <input type="text" id="searchMessages" class="form-control" placeholder="Rechercher...">
+                    <i class="fas fa-search"></i>
+                </div>
+
+                <div class="conversations-list" id="conversationsList">
+                    <!-- Conversations will be dynamically inserted here -->
+                    <div class="loading">Chargement des conversations...</div>
+                </div>
+            </div>
+
+            <!-- Message Content Area -->
+            <div class="messages-content" id="messagesContent">
+                <div class="messages-placeholder">
+                    <i class="fas fa-comments"></i>
+                    <p>Sélectionnez une conversation pour afficher les messages</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- New Message Form Modal -->
+        <div class="modal" id="newMessageModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Nouveau Message</h3>
+                    <button class="close-modal" onclick="closeNewMessageForm()">×</button>
+                </div>
+                <div class="modal-body">
+                    <form id="newMessageForm">
+                        <div class="form-group">
+                            <label for="messageRecipient">Destinataire</label>
+                            <select id="messageRecipient" class="form-control" required>
+                                <option value="">Sélectionner un destinataire...</option>
+                                <!-- Users will be dynamically loaded -->
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="messageSubject">Sujet</label>
+                            <input type="text" id="messageSubject" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="messageContent">Message</label>
+                            <textarea id="messageContent" class="form-control" rows="5" required></textarea>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" onclick="closeNewMessageForm()">Annuler</button>
+                            <button type="submit" class="btn btn-primary">Envoyer</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let conversations = [];
+        let currentConversation = null;
+        let users = [];
+
+        async function initializeMessages() {
+            try {
+                // Load users for new message form
+                users = await API.getUsers();
+                populateUserSelect();
+
+                // Load conversations
+                conversations = await API.getConversations();
+                renderConversations();
+
+                // Set up search functionality
+                const searchInput = document.getElementById('searchMessages');
+                searchInput.addEventListener('input', Utils.debounce(() => {
+                    const searchTerm = searchInput.value.toLowerCase();
+                    filterConversations(searchTerm);
+                }, 300));
+
+                // Set up new message form
+                document.getElementById('newMessageForm').addEventListener('submit', handleNewMessage);
+
+            } catch (error) {
+                console.error('Error initializing messages:', error);
+                Utils.showNotification('Erreur lors du chargement des messages', 'error');
+            }
+        }
+
+        function populateUserSelect() {
+            const select = document.getElementById('messageRecipient');
+            select.innerHTML = '<option value="">Sélectionner un destinataire...</option>' +
+                users.map(user => `
+                    <option value="${user.id}">${Utils.sanitizeHTML(user.name)}</option>
+                `).join('');
+        }
+
+        function renderConversations(filteredConversations = null) {
+            const list = document.getElementById('conversationsList');
+            const conversationsToRender = filteredConversations || conversations;
+
+            if (!conversationsToRender.length) {
+                list.innerHTML = '<div class="no-conversations">Aucune conversation</div>';
+                return;
+            }
+
+            list.innerHTML = conversationsToRender.map(conv => `
+                <div class="conversation-item ${conv.unread ? 'unread' : ''} ${currentConversation?.id === conv.id ? 'active' : ''}"
+                     onclick="loadConversation(${conv.id})">
+                    <div class="conversation-avatar">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
+                    <div class="conversation-info">
+                        <div class="conversation-header">
+                            <h4>${Utils.sanitizeHTML(getParticipantName(conv))}</h4>
+                            <span class="time">${Utils.formatDate(conv.last_message_at)}</span>
+                        </div>
+                        <div class="conversation-preview">
+                            <p>${Utils.sanitizeHTML(conv.last_message)}</p>
+                            ${conv.unread ? '<span class="unread-badge"></span>' : ''}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterConversations(searchTerm) {
+            if (!searchTerm) {
+                renderConversations();
+                return;
+            }
+
+            const filtered = conversations.filter(conv => {
+                const participantName = getParticipantName(conv).toLowerCase();
+                const lastMessage = conv.last_message.toLowerCase();
+                return participantName.includes(searchTerm) || lastMessage.includes(searchTerm);
+            });
+
+            renderConversations(filtered);
+        }
+
+        function getParticipantName(conversation) {
+            const participant = users.find(u => u.id === conversation.participant_id);
+            return participant ? participant.name : 'Utilisateur inconnu';
+        }
+
+        async function loadConversation(conversationId) {
+            try {
+                const messages = await API.getConversationMessages(conversationId);
+                currentConversation = conversations.find(c => c.id === conversationId);
+
+                const content = document.getElementById('messagesContent');
+                content.innerHTML = `
+                    <div class="conversation-header">
+                        <h3>${Utils.sanitizeHTML(getParticipantName(currentConversation))}</h3>
+                        <span class="subject">${Utils.sanitizeHTML(currentConversation.subject)}</span>
+                    </div>
+                    <div class="messages-list" id="messagesList">
+                        ${messages.map(msg => `
+                            <div class="message ${msg.sender_id === Auth.currentUser.id ? 'sent' : 'received'}">
+                                <div class="message-content">
+                                    <p>${Utils.sanitizeHTML(msg.content)}</p>
+                                    <span class="message-time">${Utils.formatDate(msg.created_at)}</span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="message-reply">
+                        <form id="replyForm" onsubmit="handleReply(event)">
+                            <textarea class="form-control" id="replyContent" placeholder="Votre réponse..." required></textarea>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane"></i> Envoyer
+                            </button>
+                        </form>
+                    </div>
+                `;
+
+                // Scroll to latest message
+                const messagesList = document.getElementById('messagesList');
+                messagesList.scrollTop = messagesList.scrollHeight;
+
+                // Mark conversation as read
+                if (currentConversation.unread) {
+                    await API.markConversationAsRead(conversationId);
+                    currentConversation.unread = false;
+                    renderConversations();
+                }
+
+            } catch (error) {
+                console.error('Error loading conversation:', error);
+                Utils.showNotification('Erreur lors du chargement de la conversation', 'error');
+            }
+        }
+
+        async function handleReply(event) {
+            event.preventDefault();
+            const content = document.getElementById('replyContent').value;
+
+            try {
+                await API.sendMessage({
+                    conversation_id: currentConversation.id,
+                    content: content
+                });
+
+                // Reload conversation to show new message
+                await loadConversation(currentConversation.id);
+
+                // Clear reply field
+                document.getElementById('replyContent').value = '';
+
+            } catch (error) {
+                console.error('Error sending reply:', error);
+                Utils.showNotification('Erreur lors de l\'envoi de la réponse', 'error');
+            }
+        }
+
+        async function handleNewMessage(event) {
+            event.preventDefault();
+
+            const recipientId = document.getElementById('messageRecipient').value;
+            const subject = document.getElementById('messageSubject').value;
+            const content = document.getElementById('messageContent').value;
+
+            try {
+                const response = await API.startConversation({
+                    recipient_id: parseInt(recipientId),
+                    subject: subject,
+                    content: content
+                });
+
+                // Add new conversation to list and select it
+                conversations.unshift(response.conversation);
+                renderConversations();
+                loadConversation(response.conversation.id);
+
+                // Close modal and reset form
+                closeNewMessageForm();
+                event.target.reset();
+
+                Utils.showNotification('Message envoyé avec succès', 'success');
+
+            } catch (error) {
+                console.error('Error sending new message:', error);
+                Utils.showNotification('Erreur lors de l\'envoi du message', 'error');
+            }
+        }
+
+        window.showNewMessageForm = () => {
+            document.getElementById('newMessageModal').style.display = 'block';
+        };
+
+        window.closeNewMessageForm = () => {
+            document.getElementById('newMessageModal').style.display = 'none';
+        };
+
+        // Initialize messages when template is loaded
+        initializeMessages();
+    </script>
+</template>

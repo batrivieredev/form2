@@ -1,0 +1,424 @@
+<template id="ticketsTemplate">
+    <div class="container tickets-container">
+        <div class="page-header">
+            <h1>Support Tickets</h1>
+            <div class="header-actions">
+                <button class="btn btn-primary" onclick="showNewTicketForm()">
+                    <i class="fas fa-plus"></i> Nouveau Ticket
+                </button>
+            </div>
+        </div>
+
+        <div class="filters">
+            <div class="search-bar">
+                <input type="text" id="searchTickets" placeholder="Rechercher un ticket..." class="form-control">
+                <i class="fas fa-search"></i>
+            </div>
+            <div class="filter-options">
+                <select id="statusFilter" class="form-control">
+                    <option value="">Tous les statuts</option>
+                    <option value="open">Ouvert</option>
+                    <option value="in_progress">En cours</option>
+                    <option value="resolved">Résolu</option>
+                    <option value="closed">Fermé</option>
+                </select>
+                <select id="priorityFilter" class="form-control">
+                    <option value="">Toutes les priorités</option>
+                    <option value="low">Basse</option>
+                    <option value="medium">Moyenne</option>
+                    <option value="high">Haute</option>
+                    <option value="urgent">Urgente</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="tickets-grid">
+            <!-- Tickets List -->
+            <div class="tickets-list" id="ticketsList">
+                <!-- Tickets will be dynamically inserted here -->
+                <div class="loading">Chargement des tickets...</div>
+            </div>
+
+            <!-- Ticket Details -->
+            <div class="ticket-details" id="ticketDetails">
+                <div class="ticket-placeholder">
+                    <i class="fas fa-ticket-alt"></i>
+                    <p>Sélectionnez un ticket pour voir les détails</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- New Ticket Modal -->
+        <div class="modal" id="newTicketModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Nouveau Ticket de Support</h3>
+                    <button class="close-modal" onclick="closeNewTicketForm()">×</button>
+                </div>
+                <div class="modal-body">
+                    <form id="newTicketForm">
+                        <div class="form-group">
+                            <label for="ticketSubject">Sujet</label>
+                            <input type="text" id="ticketSubject" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="ticketDescription">Description</label>
+                            <textarea id="ticketDescription" class="form-control" rows="5" required></textarea>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col">
+                                <label for="ticketPriority">Priorité</label>
+                                <select id="ticketPriority" class="form-control" required>
+                                    <option value="low">Basse</option>
+                                    <option value="medium" selected>Moyenne</option>
+                                    <option value="high">Haute</option>
+                                    <option value="urgent">Urgente</option>
+                                </select>
+                            </div>
+                            <div class="form-group col">
+                                <label for="ticketCategory">Catégorie</label>
+                                <select id="ticketCategory" class="form-control" required>
+                                    <option value="technical">Technique</option>
+                                    <option value="access">Accès</option>
+                                    <option value="billing">Facturation</option>
+                                    <option value="other">Autre</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="ticketAttachments">Pièces jointes</label>
+                            <input type="file" id="ticketAttachments" class="form-control" multiple>
+                            <small class="form-text text-muted">
+                                Formats acceptés: .pdf, .jpg, .png, .doc, .docx (max 5Mo par fichier)
+                            </small>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" onclick="closeNewTicketForm()">Annuler</button>
+                            <button type="submit" class="btn btn-primary">Créer le ticket</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let tickets = [];
+        let currentTicket = null;
+
+        async function initializeTickets() {
+            try {
+                // Load tickets
+                tickets = await API.getTickets();
+                renderTickets();
+
+                // Set up search and filters
+                const searchInput = document.getElementById('searchTickets');
+                const statusFilter = document.getElementById('statusFilter');
+                const priorityFilter = document.getElementById('priorityFilter');
+
+                const filterTickets = Utils.debounce(() => {
+                    const searchTerm = searchInput.value.toLowerCase();
+                    const status = statusFilter.value;
+                    const priority = priorityFilter.value;
+
+                    const filtered = tickets.filter(ticket => {
+                        const matchesSearch = ticket.subject.toLowerCase().includes(searchTerm) ||
+                                           ticket.description.toLowerCase().includes(searchTerm);
+                        const matchesStatus = !status || ticket.status === status;
+                        const matchesPriority = !priority || ticket.priority === priority;
+                        return matchesSearch && matchesStatus && matchesPriority;
+                    });
+
+                    renderTickets(filtered);
+                }, 300);
+
+                searchInput.addEventListener('input', filterTickets);
+                statusFilter.addEventListener('change', filterTickets);
+                priorityFilter.addEventListener('change', filterTickets);
+
+                // Set up new ticket form
+                document.getElementById('newTicketForm').addEventListener('submit', handleNewTicket);
+
+            } catch (error) {
+                console.error('Error initializing tickets:', error);
+                Utils.showNotification('Erreur lors du chargement des tickets', 'error');
+            }
+        }
+
+        function renderTickets(filteredTickets = null) {
+            const list = document.getElementById('ticketsList');
+            const ticketsToRender = filteredTickets || tickets;
+
+            if (!ticketsToRender.length) {
+                list.innerHTML = '<div class="no-tickets">Aucun ticket trouvé</div>';
+                return;
+            }
+
+            list.innerHTML = ticketsToRender.map(ticket => `
+                <div class="ticket-item ${ticket.status} ${currentTicket?.id === ticket.id ? 'active' : ''}"
+                     onclick="loadTicket(${ticket.id})">
+                    <div class="ticket-priority ${ticket.priority}">
+                        <i class="fas fa-circle"></i>
+                    </div>
+                    <div class="ticket-info">
+                        <div class="ticket-header">
+                            <h4>${Utils.sanitizeHTML(ticket.subject)}</h4>
+                            <span class="ticket-number">#${ticket.id}</span>
+                        </div>
+                        <div class="ticket-meta">
+                            <span class="status-badge ${ticket.status}">
+                                ${getStatusLabel(ticket.status)}
+                            </span>
+                            <span class="time">${Utils.formatDate(ticket.created_at)}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function getStatusLabel(status) {
+            const labels = {
+                'open': 'Ouvert',
+                'in_progress': 'En cours',
+                'resolved': 'Résolu',
+                'closed': 'Fermé'
+            };
+            return labels[status] || status;
+        }
+
+        async function loadTicket(ticketId) {
+            try {
+                currentTicket = await API.getTicket(ticketId);
+                const details = document.getElementById('ticketDetails');
+
+                details.innerHTML = `
+                    <div class="ticket-header">
+                        <h2>${Utils.sanitizeHTML(currentTicket.subject)}</h2>
+                        <div class="ticket-actions">
+                            ${getTicketActions(currentTicket)}
+                        </div>
+                    </div>
+                    <div class="ticket-info-panel">
+                        <div class="info-item">
+                            <span class="label">Statut:</span>
+                            <span class="status-badge ${currentTicket.status}">
+                                ${getStatusLabel(currentTicket.status)}
+                            </span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">Priorité:</span>
+                            <span class="priority-badge ${currentTicket.priority}">
+                                ${currentTicket.priority.charAt(0).toUpperCase() + currentTicket.priority.slice(1)}
+                            </span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">Créé par:</span>
+                            <span>${Utils.sanitizeHTML(currentTicket.creator_name)}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">Créé le:</span>
+                            <span>${Utils.formatDate(currentTicket.created_at)}</span>
+                        </div>
+                    </div>
+                    <div class="ticket-description">
+                        <h3>Description</h3>
+                        <p>${Utils.sanitizeHTML(currentTicket.description)}</p>
+                    </div>
+                    ${currentTicket.attachments.length ? `
+                        <div class="ticket-attachments">
+                            <h3>Pièces jointes</h3>
+                            <div class="attachments-list">
+                                ${currentTicket.attachments.map(file => `
+                                    <div class="attachment-item">
+                                        <i class="fas ${getFileIcon(file.type)}"></i>
+                                        <span>${Utils.sanitizeHTML(file.name)}</span>
+                                        <button class="btn btn-icon" onclick="downloadAttachment('${file.id}', '${file.name}')">
+                                            <i class="fas fa-download"></i>
+                                        </button>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                    <div class="ticket-responses">
+                        <h3>Réponses</h3>
+                        <div class="responses-list">
+                            ${currentTicket.responses.map(response => `
+                                <div class="response-item">
+                                    <div class="response-header">
+                                        <span class="author">${Utils.sanitizeHTML(response.author_name)}</span>
+                                        <span class="time">${Utils.formatDate(response.created_at)}</span>
+                                    </div>
+                                    <div class="response-content">
+                                        ${Utils.sanitizeHTML(response.content)}
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    <div class="ticket-reply">
+                        <form id="replyForm" onsubmit="handleTicketReply(event)">
+                            <textarea class="form-control" id="replyContent"
+                                    placeholder="Votre réponse..." required></textarea>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane"></i> Répondre
+                            </button>
+                        </form>
+                    </div>
+                `;
+
+                // Scroll responses to bottom
+                const responsesList = details.querySelector('.responses-list');
+                responsesList.scrollTop = responsesList.scrollHeight;
+
+            } catch (error) {
+                console.error('Error loading ticket:', error);
+                Utils.showNotification('Erreur lors du chargement du ticket', 'error');
+            }
+        }
+
+        function getTicketActions(ticket) {
+            const actions = [];
+
+            if (Auth.hasPermission('manage_tickets')) {
+                if (ticket.status === 'open') {
+                    actions.push(`
+                        <button class="btn btn-primary" onclick="updateTicketStatus(${ticket.id}, 'in_progress')">
+                            <i class="fas fa-play"></i> Prendre en charge
+                        </button>
+                    `);
+                }
+                if (ticket.status === 'in_progress') {
+                    actions.push(`
+                        <button class="btn btn-success" onclick="updateTicketStatus(${ticket.id}, 'resolved')">
+                            <i class="fas fa-check"></i> Marquer comme résolu
+                        </button>
+                    `);
+                }
+            }
+
+            if (ticket.status !== 'closed') {
+                actions.push(`
+                    <button class="btn btn-danger" onclick="updateTicketStatus(${ticket.id}, 'closed')">
+                        <i class="fas fa-times"></i> Fermer
+                    </button>
+                `);
+            }
+
+            return actions.join('');
+        }
+
+        function getFileIcon(fileType) {
+            const icons = {
+                'pdf': 'fa-file-pdf',
+                'doc': 'fa-file-word',
+                'docx': 'fa-file-word',
+                'jpg': 'fa-file-image',
+                'jpeg': 'fa-file-image',
+                'png': 'fa-file-image',
+                'default': 'fa-file'
+            };
+            return icons[fileType] || icons.default;
+        }
+
+        async function handleNewTicket(event) {
+            event.preventDefault();
+
+            const formData = new FormData();
+            formData.append('subject', document.getElementById('ticketSubject').value);
+            formData.append('description', document.getElementById('ticketDescription').value);
+            formData.append('priority', document.getElementById('ticketPriority').value);
+            formData.append('category', document.getElementById('ticketCategory').value);
+
+            const attachments = document.getElementById('ticketAttachments').files;
+            for (let i = 0; i < attachments.length; i++) {
+                formData.append('attachments', attachments[i]);
+            }
+
+            try {
+                const response = await API.createTicket(formData);
+
+                // Add new ticket to list and select it
+                tickets.unshift(response);
+                renderTickets();
+                loadTicket(response.id);
+
+                // Close modal and reset form
+                closeNewTicketForm();
+                event.target.reset();
+
+                Utils.showNotification('Ticket créé avec succès', 'success');
+
+            } catch (error) {
+                console.error('Error creating ticket:', error);
+                Utils.showNotification('Erreur lors de la création du ticket', 'error');
+            }
+        }
+
+        async function handleTicketReply(event) {
+            event.preventDefault();
+            const content = document.getElementById('replyContent').value;
+
+            try {
+                await API.addTicketResponse(currentTicket.id, { content });
+
+                // Reload ticket to show new response
+                await loadTicket(currentTicket.id);
+
+                // Clear reply field
+                document.getElementById('replyContent').value = '';
+
+                Utils.showNotification('Réponse envoyée avec succès', 'success');
+
+            } catch (error) {
+                console.error('Error sending reply:', error);
+                Utils.showNotification('Erreur lors de l\'envoi de la réponse', 'error');
+            }
+        }
+
+        async function updateTicketStatus(ticketId, newStatus) {
+            try {
+                await API.updateTicket(ticketId, { status: newStatus });
+
+                // Update local ticket data
+                const ticket = tickets.find(t => t.id === ticketId);
+                if (ticket) {
+                    ticket.status = newStatus;
+                    renderTickets();
+                }
+
+                // Reload ticket details
+                await loadTicket(ticketId);
+
+                Utils.showNotification('Statut du ticket mis à jour', 'success');
+
+            } catch (error) {
+                console.error('Error updating ticket status:', error);
+                Utils.showNotification('Erreur lors de la mise à jour du statut', 'error');
+            }
+        }
+
+        async function downloadAttachment(fileId, fileName) {
+            try {
+                const url = await API.getFileDownloadUrl(fileId);
+                await Utils.downloadFile(url, fileName);
+            } catch (error) {
+                console.error('Error downloading attachment:', error);
+                Utils.showNotification('Erreur lors du téléchargement du fichier', 'error');
+            }
+        }
+
+        window.showNewTicketForm = () => {
+            document.getElementById('newTicketModal').style.display = 'block';
+        };
+
+        window.closeNewTicketForm = () => {
+            document.getElementById('newTicketModal').style.display = 'none';
+            document.getElementById('newTicketForm').reset();
+        };
+
+        // Initialize tickets when template is loaded
+        initializeTickets();
+    </script>
+</template>
