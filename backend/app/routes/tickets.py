@@ -1,53 +1,61 @@
+from flask import Blueprint, request, jsonify
 from backend.app import db
-from datetime import datetime
+from backend.app.models.ticket import Ticket, TicketResponse
 
-class Ticket(db.Model):
-    __tablename__ = 'tickets'
+tickets_bp = Blueprint("tickets", __name__)
 
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(255), nullable=False)
-    description = db.Column(db.Text, nullable=False)
-    status = db.Column(db.String(50), default='open')
-    priority = db.Column(db.String(50), default='normal')
-    creator_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    subsite_id = db.Column(db.Integer, db.ForeignKey('subsites.id'), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+# Créer un ticket
+@tickets_bp.route("/tickets", methods=["POST"])
+def create_ticket():
+    data = request.get_json()
 
-    # Relation avec les réponses
-    responses = db.relationship('TicketResponse', backref='ticket', lazy='dynamic')
+    if not data or "title" not in data or "description" not in data:
+        return jsonify({"error": "Missing required fields"}), 400
 
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'title': self.title,
-            'description': self.description,
-            'status': self.status,
-            'priority': self.priority,
-            'creator_id': self.creator_id,
-            'subsite_id': self.subsite_id,
-            'created_at': self.created_at.isoformat()
-        }
+    ticket = Ticket(
+        title=data["title"],
+        description=data["description"],
+        status=data.get("status", "open"),
+        priority=data.get("priority", "normal"),
+        creator_id=data["creator_id"],
+        subsite_id=data["subsite_id"],
+    )
+    db.session.add(ticket)
+    db.session.commit()
 
-    def add_response(self, content, user_id):
-        response = TicketResponse(ticket_id=self.id, responder_id=user_id, content=content)
-        db.session.add(response)
-        db.session.commit()
-        return response
+    return jsonify(ticket.to_dict()), 201
 
-class TicketResponse(db.Model):
-    __tablename__ = 'ticket_responses'
 
-    id = db.Column(db.Integer, primary_key=True)
-    ticket_id = db.Column(db.Integer, db.ForeignKey('tickets.id'), nullable=False)
-    responder_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    content = db.Column(db.Text, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+# Récupérer tous les tickets
+@tickets_bp.route("/tickets", methods=["GET"])
+def get_tickets():
+    tickets = Ticket.query.all()
+    return jsonify([t.to_dict() for t in tickets])
 
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'ticket_id': self.ticket_id,
-            'responder_id': self.responder_id,
-            'content': self.content,
-            'created_at': self.created_at.isoformat()
-        }
+
+# Récupérer un ticket par ID
+@tickets_bp.route("/tickets/<int:ticket_id>", methods=["GET"])
+def get_ticket(ticket_id):
+    ticket = Ticket.query.get_or_404(ticket_id)
+    return jsonify(ticket.to_dict())
+
+
+# Ajouter une réponse à un ticket
+@tickets_bp.route("/tickets/<int:ticket_id>/responses", methods=["POST"])
+def add_ticket_response(ticket_id):
+    ticket = Ticket.query.get_or_404(ticket_id)
+    data = request.get_json()
+
+    if not data or "content" not in data or "responder_id" not in data:
+        return jsonify({"error": "Missing required fields"}), 400
+
+    response = ticket.add_response(content=data["content"], user_id=data["responder_id"])
+    return jsonify(response.to_dict()), 201
+
+
+# Récupérer toutes les réponses d’un ticket
+@tickets_bp.route("/tickets/<int:ticket_id>/responses", methods=["GET"])
+def get_ticket_responses(ticket_id):
+    ticket = Ticket.query.get_or_404(ticket_id)
+    responses = ticket.responses.all()
+    return jsonify([r.to_dict() for r in responses])

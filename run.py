@@ -7,5 +7,6 @@ load_dotenv()
 app = create_app()
 
 if __name__ == '__main__':
-    port = int(os.getenv('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
+    port = int(os.getenv('PORT', 5001))
+    # Debug activé pour afficher les erreurs détaillées
+    app.run(host='0.0.0.0', port=port, debug=True)

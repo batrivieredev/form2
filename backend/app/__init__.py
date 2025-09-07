@@ -2,7 +2,7 @@ import os
 import pymysql
 pymysql.install_as_MySQLdb()  # Permet à SQLAlchemy d'utiliser PyMySQL à la place de MySQLdb
 
-from flask import Flask
+from flask import Flask, render_template
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_login import LoginManager
@@ -20,13 +20,16 @@ login_manager.login_message_category = 'info'
 from backend.app.models import User, Subsite, Form, FormResponse, Message, Ticket, File
 
 def create_app(config_class=Config):
-    # Définir le chemin de base pour éviter les problèmes de chemins relatifs
-    basedir = os.path.abspath(os.path.dirname(__file__))
+    # Définir le chemin de base du projet pour éviter les problèmes de chemins relatifs
+    project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+    template_dir = os.path.join(project_root, 'frontend', 'templates')
+    static_dir = os.path.join(project_root, 'frontend', 'static')
 
     app = Flask(
         __name__,
-        static_folder=os.path.join(basedir, '../../../frontend/static'),
-        template_folder=os.path.join(basedir, '../../../frontend/templates')
+        static_folder=static_dir,
+        template_folder=template_dir
     )
 
     # Charger la configuration
@@ -53,9 +56,14 @@ def create_app(config_class=Config):
     if not os.path.exists(app.config['UPLOAD_FOLDER']):
         os.makedirs(app.config['UPLOAD_FOLDER'])
 
-    # Route principale pour servir la page index
+    # Route principale pour servir la page index via templates
     @app.route('/')
     def index():
-        return app.send_static_file('index.html')
+        return render_template('index.html')
+
+    # Vérification rapide (optionnelle, supprime après test)
+    print("Template folder:", app.template_folder)
+    print("Static folder:", app.static_folder)
+    print("Templates disponibles:", os.listdir(app.template_folder))
 
     return app
