@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block extra_styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/sub_admin/view_dossier.css') }}">
+{% endblock %}
+
+{% block content %}
+<h1>Dossier de {{ dossier.user.username }}</h1>
+
+<h2>Informations utilisateur</h2>
+<ul>
+    <li>Email : {{ dossier.user.email }}</li>
+    <li>Nom / Prénom : {{ dossier.user.username }}</li>
+    <li>Type de métier : {{ dossier.job_type }}</li>
+</ul>
+
+<h2>Questionnaire</h2>
+<ul>
+    {% for question, answer in dossier.questionnaire.items() %}
+        <li><strong>{{ question }} :</strong> {{ answer }}</li>
+    {% endfor %}
+</ul>
+
+<h2>Fichiers déposés</h2>
+<ul>
+    {% for file in dossier.files %}
+        <li><a href="{{ url_for('static', filename='uploads/' ~ file.filename) }}" target="_blank">{{ file.filename }}</a></li>
+    {% endfor %}
+</ul>
+
+<a href="{{ url_for('sub_admin.dashboard') }}">Retour au dashboard</a>
+{% endblock %}

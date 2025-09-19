@@ -12,12 +12,16 @@
         <h1>App Baptiste Rivière</h1>
         {% if current_user.is_authenticated %}
             <nav>
-                <a href="{{ url_for('user.dashboard') }}">Dashboard</a>
+                <!-- Dashboard utilisateur -->
+                <a href="{{ url_for('user.home') }}">Dashboard</a>
+
+                <!-- Liens admin selon rôle -->
                 {% if current_user.role == 'super_admin' %}
                     <a href="{{ url_for('super_admin.dashboard') }}">Super Admin</a>
                 {% elif current_user.role == 'sub_admin' %}
                     <a href="{{ url_for('sub_admin.dashboard') }}">Sous-Admin</a>
                 {% endif %}
+
                 <a href="{{ url_for('messaging.inbox') }}">Messagerie</a>
                 <a href="{{ url_for('user.logout') }}">Déconnexion</a>
             </nav>
@@ -30,6 +34,7 @@
     </header>
 
     <main>
+        <!-- Messages flash -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 <ul class="flashes">

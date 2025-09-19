@@ -1,29 +1,74 @@
-{% extends 'base.html' %}
-{% block title %}Dashboard Super Admin{% endblock %}
+{% extends "base.html" %}
 
-{% block head %}
+{% block extra_styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/super_admin/dashboard.css') }}">
 {% endblock %}
 
 {% block content %}
-<h2>Dashboard Super Admin</h2>
+<h1>Super Admin Dashboard</h1>
 
-<h3>Sites</h3>
-<ul>
-    {% for site in sites %}
-    <li>{{ site.name }} - {{ site.description }}</li>
-    {% endfor %}
-</ul>
+<h2>Sites gérés</h2>
 <a href="{{ url_for('super_admin.create_site') }}">Créer un nouveau site</a>
-
-<h3>Utilisateurs</h3>
-<ul>
-    {% for user in users %}
-    <li>{{ user.username }} ({{ user.role }})</li>
+<table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nom du site</th>
+            <th>Sous-admin</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for site in sites %}
+        <tr>
+            <td>{{ site.id }}</td>
+            <td>{{ site.name }}</td>
+            <td>
+                {% for sub in site.sub_admins %}
+                    {{ sub.username }} ({{ sub.email }})<br>
+                {% endfor %}
+            </td>
+            <td>
+                <a href="{{ url_for('super_admin.view_site', site_id=site.id) }}">Voir</a>
+                <a href="{{ url_for('super_admin.edit_site', site_id=site.id) }}">Modifier</a>
+                <form method="POST" action="{{ url_for('super_admin.delete_site', site_id=site.id) }}" style="display:inline">
+                    <button type="submit" onclick="return confirm('Supprimer ce site ?');">Supprimer</button>
+                </form>
+            </td>
+        </tr>
     {% endfor %}
-</ul>
-{% endblock %}
+    </tbody>
+</table>
 
-{% block scripts %}
-<script src="{{ url_for('static', filename='js/super_admin/dashboard.js') }}"></script>
+<h2>Utilisateurs</h2>
+<a href="{{ url_for('super_admin.create_user') }}">Créer un utilisateur</a>
+<table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nom / Prénom</th>
+            <th>Email</th>
+            <th>Rôle</th>
+            <th>Site assigné</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for user in users %}
+        <tr>
+            <td>{{ user.id }}</td>
+            <td>{{ user.username }}</td>
+            <td>{{ user.email }}</td>
+            <td>{{ user.role }}</td>
+            <td>{{ user.site.name if user.site else "Aucun" }}</td>
+            <td>
+                <a href="{{ url_for('super_admin.edit_user', user_id=user.id) }}">Modifier</a>
+                <form method="POST" action="{{ url_for('super_admin.delete_user', user_id=user.id) }}" style="display:inline">
+                    <button type="submit" onclick="return confirm('Supprimer cet utilisateur ?');">Supprimer</button>
+                </form>
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
 {% endblock %}

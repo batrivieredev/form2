@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Modifier le site{% endblock %}
+
+{% block extra_styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Modifier le site : {{ site.name }}</h2>
+    <form method="POST">
+        {{ form.hidden_tag() }}
+
+        <div class="mb-3">
+            {{ form.name.label(class="form-label") }}
+            {{ form.name(class="form-control", value=site.name) }}
+            {% for error in form.name.errors %}
+                <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+        </div>
+
+        <div class="mb-3">
+            <label for="sub_admin" class="form-label">Sous-admin</label>
+            <select name="sub_admin" id="sub_admin" class="form-select">
+                <option value="0">Aucun</option>
+                {% for u in form.sub_admin.choices %}
+                    <option value="{{ u[0] }}" {% if u[0] == (site.sub_admin_id or 0) %}selected{% endif %}>{{ u[1] }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-success">{{ form.submit.label.text }}</button>
+        <!-- Ici on pointe vers le dashboard, pas vers list_sites -->
+        <a href="{{ url_for('super_admin.dashboard') }}" class="btn btn-secondary">Annuler</a>
+    </form>
+</div>
+{% endblock %}

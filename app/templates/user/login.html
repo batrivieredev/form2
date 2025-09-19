@@ -7,12 +7,32 @@
 
 {% block content %}
 <h2>Connexion</h2>
+
+<!-- Affichage des messages flash -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="flash {{ category }}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
 <form method="POST">
     {{ form.hidden_tag() }}
-    {{ form.username.label }}<br>{{ form.username }}<br>
-    {{ form.password.label }}<br>{{ form.password }}<br>
-    {{ form.submit }}
+    <div class="form-group">
+        {{ form.email.label }}<br>
+        {{ form.email(size=32, class="form-control") }}
+    </div>
+    <div class="form-group">
+        {{ form.password.label }}<br>
+        {{ form.password(size=32, class="form-control") }}
+    </div>
+    <div class="form-group">
+        {{ form.submit(class="btn btn-primary") }}
+    </div>
 </form>
+
+<p>Pas encore inscrit ? <a href="{{ url_for('user.register') }}">Inscrivez-vous ici</a></p>
 {% endblock %}
 
 {% block scripts %}

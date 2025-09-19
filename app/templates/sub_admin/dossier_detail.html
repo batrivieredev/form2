@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block title %}Détail du dossier{% endblock %}
+
+{% block content %}
+<h2>Détail du dossier - {{ dossier.title }}</h2>
+<p>Prénom: {{ dossier.first_name }}</p>
+<p>Nom: {{ dossier.last_name }}</p>
+<p>Email: {{ dossier.email }}</p>
+<p>Type métier: {{ dossier.job_type }}</p>
+<p>Statut: {{ dossier.status }}</p>
+
+<h3>Fichiers déposés</h3>
+<ul>
+    {% for file in dossier.files %}
+    <li><a href="{{ url_for('static', filename='uploads/' ~ file.filename) }}">{{ file.filename }}</a></li>
+    {% endfor %}
+</ul>
+
+<h3>Mettre à jour le statut</h3>
+<form method="POST">
+    <select name="statut">
+        <option value="déposé" {% if dossier.status == 'déposé' %}selected{% endif %}>Déposé</option>
+        <option value="en cours de décision" {% if dossier.status == 'en cours de décision' %}selected{% endif %}>En cours de décision</option>
+        <option value="validé" {% if dossier.status == 'validé' %}selected{% endif %}>Validé</option>
+    </select>
+    <button type="submit">Mettre à jour</button>
+</form>
+{% endblock %}

@@ -1,4 +1,91 @@
-form { max-width: 400px; background: #fff; padding: 20px; border-radius: 5px; margin-top: 20px; }
-input, button { width: 100%; padding: 8px; margin-bottom: 10px; }
-button { background-color: #27ae60; color: #fff; border: none; cursor: pointer; }
-button:hover { background-color: #2ecc71; }
+/* Style global du formulaire */
+form {
+    max-width: 400px;
+    margin: 30px auto;
+    padding: 25px;
+    background-color: #1c1c1c;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.3);
+    color: #fff;
+    font-family: Arial, sans-serif;
+}
+
+/* Titres */
+h2 {
+    text-align: center;
+    color: #00ffff;
+    margin-bottom: 20px;
+    text-shadow: 0 0 5px #00ffff;
+}
+
+/* Champs du formulaire */
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 8px;
+    border-radius: 5px;
+    border: none;
+    outline: none;
+    box-sizing: border-box;
+}
+
+/* Bouton */
+.btn-primary {
+    width: 100%;
+    padding: 10px;
+    background-color: #00ffff;
+    color: #000;
+    border: none;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.btn-primary:hover {
+    background-color: #00b8b8;
+}
+
+/* Messages flash */
+.flash {
+    padding: 10px;
+    margin-bottom: 15px;
+    border-radius: 5px;
+    text-align: center;
+}
+
+.flash.success {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.flash.danger {
+    background-color: #f44336;
+    color: white;
+}
+
+/* Lien vers login */
+p {
+    text-align: center;
+    margin-top: 15px;
+}
+
+p a {
+    color: #00ffff;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+p a:hover {
+    color: #00b8b8;
+    text-decoration: underline;
+}

@@ -1,76 +1,42 @@
-from datetime import datetime
-from app import db
-from flask import current_app
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
+from app import db
 
 class User(UserMixin, db.Model):
-    __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(128))
-    role = db.Column(db.String(20), default='user')
+    role = db.Column(db.String(20), default='user')  # user / sub_admin / super_admin
+    dossiers = db.relationship('Dossier', backref='user', lazy=True)
+    site_id = db.Column(db.Integer, db.ForeignKey('site.id'))
 
-    sites = db.relationship('Site', backref='owner', lazy='dynamic')
-    dossiers = db.relationship('Dossier', backref='owner', lazy='dynamic')
-    messages_sent = db.relationship('Message', foreign_keys='Message.sender_id', backref='sender', lazy='dynamic')
-    messages_received = db.relationship('Message', foreign_keys='Message.recipient_id', backref='recipient', lazy='dynamic')
-
+    managed_sites = db.relationship('Site', backref='sub_admin', lazy=True, foreign_keys='Site.sub_admin_id')
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
+
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
-
-
 class Site(db.Model):
-    __tablename__ = 'sites'
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    description = db.Column(db.String(255))
-    owner_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-
-    dossiers = db.relationship('Dossier', backref='site', lazy='dynamic')
-    users = db.relationship('User', secondary='site_users', backref='sites_assoc')
-
-
-site_users = db.Table('site_users',
-    db.Column('site_id', db.Integer, db.ForeignKey('sites.id')),
-    db.Column('user_id', db.Integer, db.ForeignKey('users.id'))
-)
-
+    name = db.Column(db.String(100), unique=True, nullable=False)
+    sub_admin_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    dossiers = db.relationship('Dossier', backref='site', lazy=True)
 
 class Dossier(db.Model):
-    __tablename__ = 'dossiers'
     id = db.Column(db.Integer, primary_key=True)
-    prenom = db.Column(db.String(64), nullable=False)
-    nom = db.Column(db.String(64), nullable=False)
+    first_name = db.Column(db.String(50), nullable=False)
+    last_name = db.Column(db.String(50), nullable=False)
     email = db.Column(db.String(120), nullable=False)
-    telephone = db.Column(db.String(20))
-    metier = db.Column(db.String(100))
-    statut = db.Column(db.String(20), default='déposé')
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    job_type = db.Column(db.String(100))
+    status = db.Column(db.String(50), default='déposé')  # déposé / en cours / validé
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    site_id = db.Column(db.Integer, db.ForeignKey('site.id'))
+    files = db.relationship('File', backref='dossier', lazy=True)
 
-    owner_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-    site_id = db.Column(db.Integer, db.ForeignKey('sites.id'))
-
-    fichiers = db.relationship('Fichier', backref='dossier', lazy='dynamic')
-
-
-class Fichier(db.Model):
-    __tablename__ = 'fichiers'
+class File(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    filename = db.Column(db.String(255), nullable=False)
-    uploaded_at = db.Column(db.DateTime, default=datetime.utcnow)
-    dossier_id = db.Column(db.Integer, db.ForeignKey('dossiers.id'))
-
-
-class Message(db.Model):
-    __tablename__ = 'messages'
-    id = db.Column(db.Integer, primary_key=True)
-    sender_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-    recipient_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-    body = db.Column(db.Text, nullable=False)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    filename = db.Column(db.String(200), nullable=False)
+    dossier_id = db.Column(db.Integer, db.ForeignKey('dossier.id'))

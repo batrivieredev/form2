@@ -1,0 +1,37 @@
+/* style.css global minimal */
+body {
+    background-color: #121212;
+    color: #ffffff;
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+header, footer {
+    background-color: #1c1c1c;
+    padding: 10px 20px;
+    text-align: center;
+}
+
+nav a {
+    color: #00ffff;
+    text-decoration: none;
+    margin: 0 10px;
+}
+
+nav a:hover {
+    color: #00b8b8;
+}
+
+main {
+    padding: 20px;
+}
+
+.flashes li {
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+}
+
+.flashes .success { background-color: #4CAF50; color: white; }
+.flashes .danger { background-color: #f44336; color: white; }

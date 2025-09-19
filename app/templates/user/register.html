@@ -7,14 +7,40 @@
 
 {% block content %}
 <h2>Créer un compte</h2>
+
+<!-- Affichage des messages flash -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="flash {{ category }}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
 <form method="POST">
     {{ form.hidden_tag() }}
-    {{ form.username.label }}<br>{{ form.username }}<br>
-    {{ form.email.label }}<br>{{ form.email }}<br>
-    {{ form.password.label }}<br>{{ form.password }}<br>
-    {{ form.password2.label }}<br>{{ form.password2 }}<br>
-    {{ form.submit }}
+    <div class="form-group">
+        {{ form.username.label }}<br>
+        {{ form.username(size=32, class="form-control") }}
+    </div>
+    <div class="form-group">
+        {{ form.email.label }}<br>
+        {{ form.email(size=32, class="form-control") }}
+    </div>
+    <div class="form-group">
+        {{ form.password.label }}<br>
+        {{ form.password(size=32, class="form-control") }}
+    </div>
+    <div class="form-group">
+        {{ form.confirm_password.label }}<br>
+        {{ form.confirm_password(size=32, class="form-control") }}
+    </div>
+    <div class="form-group">
+        {{ form.submit(class="btn btn-primary") }}
+    </div>
 </form>
+
+<p>Déjà inscrit ? <a href="{{ url_for('user.login') }}">Connectez-vous ici</a></p>
 {% endblock %}
 
 {% block scripts %}

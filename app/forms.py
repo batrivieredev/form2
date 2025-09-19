@@ -1,68 +1,45 @@
-"""
-app/forms.py
-Formulaires Flask-WTF pour authentification, inscription et dépôt de dossier.
-"""
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, TextAreaField, SelectField, FileField
-from wtforms.validators import DataRequired, Email, EqualTo, Length
+from wtforms import StringField, PasswordField, SubmitField, SelectField, MultipleFileField
+from wtforms.validators import DataRequired, Email, Length, EqualTo, Optional
 
-# =============================
-# Formulaire de Connexion
-# =============================
 class LoginForm(FlaskForm):
-    username = StringField("Nom d'utilisateur", validators=[DataRequired()])
-    password = PasswordField("Mot de passe", validators=[DataRequired()])
-    submit = SubmitField("Connexion")
-
-
-# =============================
-# Formulaire d'Inscription utilisateur
-# =============================
-class RegistrationForm(FlaskForm):
-    username = StringField("Nom d'utilisateur", validators=[DataRequired(), Length(min=3, max=64)])
     email = StringField("Email", validators=[DataRequired(), Email()])
-    password = PasswordField("Mot de passe", validators=[DataRequired(), Length(min=6)])
-    password2 = PasswordField("Confirmer mot de passe", validators=[DataRequired(), EqualTo("password")])
+    password = PasswordField("Mot de passe", validators=[DataRequired()])
+    submit = SubmitField("Se connecter")
+
+class RegistrationForm(FlaskForm):
+    username = StringField("Nom d'utilisateur", validators=[DataRequired(), Length(3, 64)])
+    email = StringField("Email", validators=[DataRequired(), Email()])
+    password = PasswordField("Mot de passe", validators=[DataRequired(), Length(6, 128)])
+    confirm_password = PasswordField("Confirmer le mot de passe", validators=[DataRequired(), EqualTo('password')])
     submit = SubmitField("S'inscrire")
 
-
-# =============================
-# Formulaire de dépôt de dossier (questionnaire + fichiers)
-# =============================
 class DossierForm(FlaskForm):
-    prenom = StringField("Prénom", validators=[DataRequired()])
-    nom = StringField("Nom", validators=[DataRequired()])
+    first_name = StringField("Prénom", validators=[DataRequired()])
+    last_name = StringField("Nom", validators=[DataRequired()])
     email = StringField("Email", validators=[DataRequired(), Email()])
-    telephone = StringField("Téléphone", validators=[DataRequired()])
-
-    # Choix métier
-    metier = SelectField(
-        "Type de métier",
-        choices=[
-            ("metiers_bouche", "Métiers de bouche"),
-            ("bijoux", "Bijoux"),
-            ("sculpture", "Sculpture"),
-            ("textile", "Textile"),
-            ("cuir", "Cuir"),
-            ("bois", "Bois"),
-            ("verre", "Verre"),
-            ("poterie", "Poterie"),
-            ("peinture", "Peinture"),
-            ("photographie", "Photographie"),
-            ("cosmetique", "Cosmétique"),
-            ("decoration", "Décoration"),
-            ("autre", "Autre")
-        ],
-        validators=[DataRequired()]
-    )
-
-    fichier = FileField("Déposer vos fichiers (PDF, DOCX, images)", validators=[DataRequired()])
+    job_type = SelectField("Type de métier", choices=[
+        ("metier_bouche", "Métier de bouche"),
+        ("bijoux", "Bijoux"),
+        ("sculpture", "Sculpture"),
+        ("peinture", "Peinture"),
+        ("textile", "Textile"),
+        ("mode", "Mode"),
+        ("autre", "Autre")
+    ], validators=[DataRequired()])
+    site = SelectField("Site", coerce=int)
+    files = MultipleFileField("Fichiers à déposer")
     submit = SubmitField("Soumettre le dossier")
 
+class SiteForm(FlaskForm):
+    name = StringField("Nom du site", validators=[DataRequired(), Length(min=2, max=100)])
+    sub_admin_id = SelectField("Sous-admin", coerce=int, choices=[])
+    submit = SubmitField("Valider")
 
-# =============================
-# Formulaire de messagerie
-# =============================
-class MessageForm(FlaskForm):
-    body = TextAreaField("Message", validators=[DataRequired(), Length(min=1, max=500)])
-    submit = SubmitField("Envoyer")
+class UserForm(FlaskForm):
+    username = StringField("Nom d'utilisateur", validators=[DataRequired(), Length(min=2, max=50)])
+    email = StringField("Email", validators=[DataRequired(), Email()])
+    password = PasswordField("Mot de passe", validators=[Optional(), Length(min=6)])
+    role = SelectField("Rôle", choices=[('sub_admin', 'Sous-admin'), ('user', 'Utilisateur')], validators=[DataRequired()])
+    site = SelectField("Site", coerce=int, validators=[DataRequired()])
+    submit = SubmitField("Valider")

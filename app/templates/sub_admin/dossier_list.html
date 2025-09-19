@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block title %}Liste des dossiers{% endblock %}
+
+{% block content %}
+<h2>Liste des dossiers - {{ current_user.site.name }}</h2>
+<table>
+    <tr>
+        <th>ID</th>
+        <th>Nom</th>
+        <th>Statut</th>
+        <th>Actions</th>
+    </tr>
+    {% for dossier in dossiers %}
+    <tr>
+        <td>{{ dossier.id }}</td>
+        <td>{{ dossier.title }}</td>
+        <td>{{ dossier.status }}</td>
+        <td>
+            <a href="{{ url_for('sub_admin.dossier_detail', dossier_id=dossier.id) }}">Voir</a>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

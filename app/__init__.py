@@ -3,38 +3,52 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 
+# Création des instances globales
 db = SQLAlchemy()
 login_manager = LoginManager()
-login_manager.login_view = 'user.login'  # redirection vers login si non connecté
+login_manager.login_view = 'user.login'
 
 def create_app():
-    app = Flask(__name__,
-                template_folder=os.path.join(os.path.dirname(__file__), 'templates'),
-                static_folder=os.path.join(os.path.dirname(__file__), 'static'))
-
+    app = Flask(
+        __name__,
+        template_folder=os.path.join(os.path.dirname(__file__), 'templates'),
+        static_folder=os.path.join(os.path.dirname(__file__), 'static')
+    )
     app.config.from_object('config.Config')
 
-    # Crée le dossier instance si nécessaire
-    os.makedirs(app.instance_path, exist_ok=True)
+    # Crée les dossiers instance et uploads si manquants
+    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
+    # Initialisation des extensions
     db.init_app(app)
     login_manager.init_app(app)
 
-    # Importer les blueprints
+    with app.app_context():
+        # Import des modèles ici pour éviter les imports circulaires
+        from app import models
+        from app.models import User
+
+        # Fonction pour charger l'utilisateur
+        @login_manager.user_loader
+        def load_user(user_id):
+            return db.session.get(User, int(user_id))
+
+        # Crée les tables si elles n'existent pas
+        db.create_all()
+
+    # Import et enregistrement des blueprints
     from app.routes.user import user_bp
-    app.register_blueprint(user_bp, url_prefix='/user')
+    from app.routes.super_admin import super_admin_bp
+    from app.routes.sub_admin import sub_admin_bp
+    from app.routes.messaging import messaging_bp
 
-    from app.routes.auth import auth_bp
-    app.register_blueprint(auth_bp)
+    app.register_blueprint(user_bp)
+    app.register_blueprint(super_admin_bp, url_prefix='/super')
+    app.register_blueprint(sub_admin_bp, url_prefix='/sub')
+    app.register_blueprint(messaging_bp, url_prefix='/messaging')
 
-    # User loader pour Flask-Login
-    from app.models import User
-    @login_manager.user_loader
-    def load_user(user_id):
-        return User.query.get(int(user_id))
-
-    # Optionnel : debug template
-    print("Template folder:", app.template_folder)
-    print("Templates disponibles:", os.listdir(app.template_folder))
+    @app.route('/healthz')
+    def healthz():
+        return 'ok'
 
     return app

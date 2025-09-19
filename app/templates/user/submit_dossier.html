@@ -1,24 +1,29 @@
 {% extends 'base.html' %}
-{% block title %}Soumettre un Dossier{% endblock %}
 
-{% block head %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/user/submit_dossier.css') }}">
-{% endblock %}
+{% block title %}Soumettre un dossier{% endblock %}
 
 {% block content %}
-<h2>Soumettre un nouveau dossier</h2>
+<h2>Soumettre un dossier</h2>
 <form method="POST" enctype="multipart/form-data">
     {{ form.hidden_tag() }}
-    {{ form.prenom.label }}<br>{{ form.prenom }}<br>
-    {{ form.nom.label }}<br>{{ form.nom }}<br>
-    {{ form.email.label }}<br>{{ form.email }}<br>
-    {{ form.telephone.label }}<br>{{ form.telephone }}<br>
-    {{ form.metier.label }}<br>{{ form.metier }}<br>
-    {{ form.fichier.label }}<br>{{ form.fichier }}<br>
-    {{ form.submit }}
-</form>
-{% endblock %}
+    <label>Prénom:</label>
+    {{ form.first_name() }}<br>
 
-{% block scripts %}
-<script src="{{ url_for('static', filename='js/user/submit_dossier.js') }}"></script>
+    <label>Nom:</label>
+    {{ form.last_name() }}<br>
+
+    <label>Email:</label>
+    {{ form.email() }}<br>
+
+    <label>Type de métier:</label>
+    {{ form.job_type() }}<br>
+
+    <label>Site:</label>
+    {{ form.site() }}<br>
+
+    <label>Fichiers (PDF, Word, images...):</label>
+    {{ form.files() }}<br>
+
+    {{ form.submit() }}
+</form>
 {% endblock %}

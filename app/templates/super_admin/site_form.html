@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ 'Éditer' if site else 'Créer' }} Site{% endblock %}
+
+{% block content %}
+<h2>{{ 'Éditer' if site else 'Créer' }} Site</h2>
+<form method="POST">
+    <label>Nom du site:</label>
+    <input type="text" name="name" value="{{ site.name if site else '' }}" required>
+    <br>
+    <label>Slug du site (URL friendly):</label>
+    <input type="text" name="slug" value="{{ site.slug if site else '' }}" required>
+    <br>
+    <button type="submit">{{ 'Mettre à jour' if site else 'Créer' }}</button>
+</form>
+{% endblock %}
