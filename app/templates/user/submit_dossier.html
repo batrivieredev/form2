@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block title %}Soumettre un Dossier{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/user/submit_dossier.css') }}">
+{% endblock %}
+
+{% block content %}
+<h2>Soumettre un nouveau dossier</h2>
+<form method="POST" enctype="multipart/form-data">
+    {{ form.hidden_tag() }}
+    {{ form.prenom.label }}<br>{{ form.prenom }}<br>
+    {{ form.nom.label }}<br>{{ form.nom }}<br>
+    {{ form.email.label }}<br>{{ form.email }}<br>
+    {{ form.telephone.label }}<br>{{ form.telephone }}<br>
+    {{ form.metier.label }}<br>{{ form.metier }}<br>
+    {{ form.fichier.label }}<br>{{ form.fichier }}<br>
+    {{ form.submit }}
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/user/submit_dossier.js') }}"></script>
+{% endblock %}

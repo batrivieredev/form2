@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block title %}Modifier Dossier{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/sub_admin/update_dossier.css') }}">
+{% endblock %}
+
+{% block content %}
+<h2>Modifier Dossier – {{ dossier.nom }} {{ dossier.prenom }}</h2>
+
+<form method="POST">
+    <label>Statut</label>
+    <select name="statut">
+        <option value="déposé" {% if dossier.statut=='déposé' %}selected{% endif %}>Déposé</option>
+        <option value="en cours" {% if dossier.statut=='en cours' %}selected{% endif %}>En cours de décision</option>
+        <option value="validé" {% if dossier.statut=='validé' %}selected{% endif %}>Validé</option>
+    </select>
+    <button type="submit">Mettre à jour</button>
+</form>
+
+<h3>Fichiers déposés</h3>
+<ul>
+    {% for fichier in dossier.fichiers %}
+    <li>{{ fichier.filename }}</li>
+    {% endfor %}
+</ul>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/sub_admin/update_dossier.js') }}"></script>
+{% endblock %}

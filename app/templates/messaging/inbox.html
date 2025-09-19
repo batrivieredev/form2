@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block title %}Messagerie{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/messaging/inbox.css') }}">
+{% endblock %}
+
+{% block content %}
+<h2>Messagerie</h2>
+
+<h3>Envoyer un message</h3>
+<form method="POST">
+    {{ form.hidden_tag() }}
+    <label>Destinataire</label>
+    <select name="recipient_id">
+        {% for r in recipients %}
+        <option value="{{ r.id }}">{{ r.username }} ({{ r.role }})</option>
+        {% endfor %}
+    </select>
+    <label>Message</label>
+    {{ form.body }}
+    {{ form.submit }}
+</form>
+
+<h3>Messages reçus</h3>
+<table>
+    <thead>
+        <tr>
+            <th>De</th>
+            <th>Message</th>
+            <th>Date</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for msg in messages %}
+        <tr>
+            <td>{{ msg.sender.username }}</td>
+            <td>{{ msg.body }}</td>
+            <td>{{ msg.timestamp.strftime('%d/%m/%Y %H:%M') }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/messaging/inbox.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard Utilisateur{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/user/dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<h2>Mon Dashboard</h2>
+
+<h3>Mes dossiers</h3>
+<table>
+    <thead>
+        <tr>
+            <th>Nom</th>
+            <th>Prénom</th>
+            <th>Type métier</th>
+            <th>Statut</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for dossier in dossiers %}
+        <tr>
+            <td>{{ dossier.nom }}</td>
+            <td>{{ dossier.prenom }}</td>
+            <td>{{ dossier.metier }}</td>
+            <td>{{ dossier.statut }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<a href="{{ url_for('user.submit_dossier') }}">Soumettre un nouveau dossier</a>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/user/dashboard.js') }}"></script>
+{% endblock %}

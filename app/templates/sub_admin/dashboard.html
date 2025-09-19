@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard Sous-Admin{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/sub_admin/dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<h2>Dashboard Sous-Admin – {{ site.name if site else 'Aucun site' }}</h2>
+
+<h3>Dossiers</h3>
+<table>
+    <thead>
+        <tr>
+            <th>Nom</th>
+            <th>Prénom</th>
+            <th>Type métier</th>
+            <th>Statut</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for dossier in dossiers %}
+        <tr>
+            <td>{{ dossier.nom }}</td>
+            <td>{{ dossier.prenom }}</td>
+            <td>{{ dossier.metier }}</td>
+            <td>{{ dossier.statut }}</td>
+            <td><a href="{{ url_for('sub_admin.update_dossier', dossier_id=dossier.id) }}">Modifier</a></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<a href="{{ url_for('sub_admin.manage_users') }}">Gérer les utilisateurs</a>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/sub_admin/dashboard.js') }}"></script>
+{% endblock %}

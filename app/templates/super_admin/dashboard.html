@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard Super Admin{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/super_admin/dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<h2>Dashboard Super Admin</h2>
+
+<h3>Sites</h3>
+<ul>
+    {% for site in sites %}
+    <li>{{ site.name }} - {{ site.description }}</li>
+    {% endfor %}
+</ul>
+<a href="{{ url_for('super_admin.create_site') }}">Créer un nouveau site</a>
+
+<h3>Utilisateurs</h3>
+<ul>
+    {% for user in users %}
+    <li>{{ user.username }} ({{ user.role }})</li>
+    {% endfor %}
+</ul>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/super_admin/dashboard.js') }}"></script>
+{% endblock %}

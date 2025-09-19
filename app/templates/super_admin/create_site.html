@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block title %}Créer un Site{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/super_admin/create_site.css') }}">
+{% endblock %}
+
+{% block content %}
+<h2>Créer un nouveau site</h2>
+<form method="POST">
+    <label>Nom du site</label>
+    <input type="text" name="name" required>
+    <label>Description</label>
+    <textarea name="description"></textarea>
+    <button type="submit">Créer</button>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/super_admin/create_site.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,4 @@
+form { max-width: 400px; background: #fff; padding: 20px; border-radius: 5px; margin-top: 20px; }
+input, button { width: 100%; padding: 8px; margin-bottom: 10px; }
+button { background-color: #27ae60; color: #fff; border: none; cursor: pointer; }
+button:hover { background-color: #2ecc71; }

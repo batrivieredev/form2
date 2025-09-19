@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}App Baptiste Rivière{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <header>
+        <h1>App Baptiste Rivière</h1>
+        {% if current_user.is_authenticated %}
+            <nav>
+                <a href="{{ url_for('user.dashboard') }}">Dashboard</a>
+                {% if current_user.role == 'super_admin' %}
+                    <a href="{{ url_for('super_admin.dashboard') }}">Super Admin</a>
+                {% elif current_user.role == 'sub_admin' %}
+                    <a href="{{ url_for('sub_admin.dashboard') }}">Sous-Admin</a>
+                {% endif %}
+                <a href="{{ url_for('messaging.inbox') }}">Messagerie</a>
+                <a href="{{ url_for('user.logout') }}">Déconnexion</a>
+            </nav>
+        {% else %}
+            <nav>
+                <a href="{{ url_for('user.login') }}">Connexion</a>
+                <a href="{{ url_for('user.register') }}">Inscription</a>
+            </nav>
+        {% endif %}
+    </header>
+
+    <main>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <ul class="flashes">
+                {% for category, message in messages %}
+                    <li class="{{ category }}">{{ message }}</li>
+                {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+        <p>© Site codé entièrement par Baptiste RIVIÈRE pour Fusikab DJ – Tous droits réservés – dernière MAJ : Sept 2025</p>
+        <p>
+            <a href="#">CGV</a> |
+            <a href="#">CGU</a> |
+            <a href="#">Politique cookies</a> |
+            <a href="#">Politique confidentialité</a>
+        </p>
+    </footer>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

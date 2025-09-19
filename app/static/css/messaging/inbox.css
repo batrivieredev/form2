@@ -1,0 +1,9 @@
+form { max-width: 500px; background: #fff; padding: 20px; border-radius: 5px; margin-bottom: 20px; }
+select, textarea, button { width: 100%; padding: 8px; margin-bottom: 10px; }
+button { background-color: #2980b9; color: #fff; border: none; cursor: pointer; }
+button:hover { background-color: #3498db; }
+
+table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+th { background-color: #34495e; color: #fff; }
+tr:nth-child(even) { background-color: #f2f2f2; }
