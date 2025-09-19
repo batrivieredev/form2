@@ -2,8 +2,9 @@
 
 ```bash
 cd form2-main
-python -m venv venv && source venv/bin/activate  # Windows: venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-python run.py
+python3 -m venv venv && source venv/bin/activate
+pip3 install -r requirements.txt
+python3 run.py
 ```
 Open http://127.0.0.1:5001/
+

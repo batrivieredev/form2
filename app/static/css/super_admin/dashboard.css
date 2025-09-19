@@ -1,5 +1,76 @@
-h2 { color: #2c3e50; }
-h3 { color: #34495e; margin-top: 20px; }
-ul { padding-left: 20px; }
-a { color: #2980b9; text-decoration: none; }
-a:hover { text-decoration: underline; }
+/* dashboard.css spécifique, ne touche pas au style global */
+
+.dashboard-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+    background-color: #1e1e1e;
+    color: #ffffff;
+}
+
+.dashboard-table th,
+.dashboard-table td {
+    border: 1px solid #333;
+    padding: 10px;
+    text-align: left;
+}
+
+.dashboard-table th {
+    background-color: #272727;
+}
+
+.dashboard-table tr:nth-child(even) {
+    background-color: #2a2a2a;
+}
+
+.dashboard-table tr:hover {
+    background-color: #3a3a3a;
+}
+
+.btn {
+    padding: 5px 10px;
+    border: none;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: bold;
+    cursor: pointer;
+    margin-right: 5px;
+    color: #fff;
+}
+
+.btn-primary {
+    background-color: #00b8b8;
+}
+
+.btn-primary:hover {
+    background-color: #00ffff;
+}
+
+.btn-secondary {
+    background-color: #555;
+}
+
+.btn-secondary:hover {
+    background-color: #777;
+}
+
+.btn-warning {
+    background-color: #ff9800;
+}
+
+.btn-warning:hover {
+    background-color: #ffa733;
+}
+
+.btn-danger {
+    background-color: #f44336;
+}
+
+.btn-danger:hover {
+    background-color: #f66;
+}
+
+h1, h2 {
+    color: #00ffff;
+    margin-top: 20px;
+}
