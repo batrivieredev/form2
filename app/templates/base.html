@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>{% block title %}App Baptiste Rivière{% endblock %}</title>
+    <title>{% block title %}App {% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     {% block extra_styles %}{% endblock %}
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -10,23 +10,19 @@
 <body>
     <header>
         <h1>App Baptiste Rivière</h1>
-        {% if current_user.is_authenticated %}
-            <nav>
+        <nav>
+            {% if current_user.is_authenticated %}
                 <a href="{{ url_for('user.home') }}">Dashboard</a>
-                {% if current_user.role == 'super_admin' %}
-                    <a href="{{ url_for('super_admin.dashboard') }}">Super Admin</a>
-                {% elif current_user.role == 'sub_admin' %}
+                {% if current_user.role == 'sub_admin' %}
                     <a href="{{ url_for('sub_admin.dashboard') }}">Sous-Admin</a>
                 {% endif %}
                 <a href="{{ url_for('messaging.inbox') }}">Messagerie</a>
                 <a href="{{ url_for('user.logout') }}">Déconnexion</a>
-            </nav>
-        {% else %}
-            <nav>
+            {% else %}
                 <a href="{{ url_for('user.login') }}">Connexion</a>
                 <a href="{{ url_for('user.register') }}">Inscription</a>
-            </nav>
-        {% endif %}
+            {% endif %}
+        </nav>
     </header>
 
     <main>

@@ -1,38 +1,41 @@
 {% extends 'base.html' %}
+
 {% block title %}Connexion{% endblock %}
 
-{% block head %}
+{% block extra_styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/user/login.css') }}">
 {% endblock %}
 
 {% block content %}
-<h2>Connexion</h2>
+<div class="login-container">
+    <h2>Connexion</h2>
 
-<!-- Affichage des messages flash -->
-{% with messages = get_flashed_messages(with_categories=true) %}
-  {% if messages %}
-    {% for category, message in messages %}
-      <div class="flash {{ category }}">{{ message }}</div>
-    {% endfor %}
-  {% endif %}
-{% endwith %}
+    <!-- Messages flash -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="flash {{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
 
-<form method="POST">
-    {{ form.hidden_tag() }}
-    <div class="form-group">
-        {{ form.email.label }}<br>
-        {{ form.email(size=32, class="form-control") }}
-    </div>
-    <div class="form-group">
-        {{ form.password.label }}<br>
-        {{ form.password(size=32, class="form-control") }}
-    </div>
-    <div class="form-group">
-        {{ form.submit(class="btn btn-primary") }}
-    </div>
-</form>
+    <form method="POST" class="login-form">
+        {{ form.hidden_tag() }}
+        <div class="form-group">
+            {{ form.email.label }}<br>
+            {{ form.email(class="form-control") }}
+        </div>
+        <div class="form-group">
+            {{ form.password.label }}<br>
+            {{ form.password(class="form-control") }}
+        </div>
+        <div class="form-group">
+            {{ form.submit(class="btn btn-primary") }}
+        </div>
+    </form>
 
-<p>Pas encore inscrit ? <a href="{{ url_for('user.register') }}">Inscrivez-vous ici</a></p>
+    <p>Pas encore inscrit ? <a href="{{ url_for('user.register') }}">Inscrivez-vous ici</a></p>
+</div>
 {% endblock %}
 
 {% block scripts %}
