@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Voir le site{% endblock %}
+
+{% block extra_styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/super_admin/dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<h2>Site : {{ site.name }}</h2>
+<p>ID : {{ site.id }}</p>
+<p>Sous-admin(s) :
+    {% if site.sub_admins %}
+        {% for sub in site.sub_admins %}
+            {{ sub.username }} ({{ sub.email }})<br>
+        {% endfor %}
+    {% else %}
+        Aucun
+    {% endif %}
+</p>
+
+<h3>Utilisateurs affectés</h3>
+{% if site.users %}
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nom</th>
+            <th>Email</th>
+            <th>Rôle</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for user in site.users %}
+        <tr>
+            <td>{{ user.id }}</td>
+            <td>{{ user.username }}</td>
+            <td>{{ user.email }}</td>
+            <td>{{ user.role }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>Aucun utilisateur assigné à ce site.</p>
+{% endif %}
+
+<a href="{{ url_for('super_admin.edit_site', site_id=site.id) }}" class="btn btn-warning">Modifier</a>
+<a href="{{ url_for('super_admin.dashboard') }}" class="btn btn-secondary">Retour</a>
+{% endblock %}

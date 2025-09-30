@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block extra_styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/messaging/inbox.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="messaging">
+    <h2>Composer un message</h2>
+    <form method="POST" class="compose-form">
+        <label>De :</label>
+        <input type="text" name="from" required>
+
+        <label>Objet :</label>
+        <input type="text" name="subject" required>
+
+        <label>Message :</label>
+        <textarea name="body" rows="5" required></textarea>
+
+        <button type="submit" class="btn btn-primary">Envoyer</button>
+        <a href="{{ url_for('messaging.inbox') }}" class="btn btn-secondary">Annuler</a>
+    </form>
+</div>
+{% endblock %}

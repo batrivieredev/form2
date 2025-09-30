@@ -1,48 +1,36 @@
-{% extends 'base.html' %}
-{% block title %}Messagerie{% endblock %}
+{% extends "base.html" %}
 
-{% block head %}
+{% block extra_styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/messaging/inbox.css') }}">
 {% endblock %}
 
 {% block content %}
-<h2>Messagerie</h2>
-
-<h3>Envoyer un message</h3>
-<form method="POST">
-    {{ form.hidden_tag() }}
-    <label>Destinataire</label>
-    <select name="recipient_id">
-        {% for r in recipients %}
-        <option value="{{ r.id }}">{{ r.username }} ({{ r.role }})</option>
-        {% endfor %}
-    </select>
-    <label>Message</label>
-    {{ form.body }}
-    {{ form.submit }}
-</form>
-
-<h3>Messages reçus</h3>
-<table>
-    <thead>
-        <tr>
-            <th>De</th>
-            <th>Message</th>
-            <th>Date</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for msg in messages %}
-        <tr>
-            <td>{{ msg.sender.username }}</td>
-            <td>{{ msg.body }}</td>
-            <td>{{ msg.timestamp.strftime('%d/%m/%Y %H:%M') }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-{% endblock %}
-
-{% block scripts %}
-<script src="{{ url_for('static', filename='js/messaging/inbox.js') }}"></script>
+<div class="messaging">
+    <h2>Inbox</h2>
+    <a href="{{ url_for('messaging.compose') }}" class="btn btn-primary mb-3">Composer un message</a>
+    <div class="table-container">
+        <table class="message-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Objet</th>
+                    <th>De</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for msg in messages %}
+                <tr class="{{ 'unread' if msg.get('unread', False) else '' }}">
+                    <td>{{ msg.id }}</td>
+                    <td><a href="{{ url_for('messaging.view_message', msg_id=msg.id) }}">{{ msg.subject }}</a></td>
+                    <td>{{ msg.from }}</td>
+                    <td>{{ msg.date.strftime("%d/%m/%Y %H:%M") }}</td>
+                    <td><a href="{{ url_for('messaging.view_message', msg_id=msg.id) }}" class="btn btn-secondary">Voir</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
 {% endblock %}

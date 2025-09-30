@@ -1,26 +1,45 @@
 {% extends "base.html" %}
 
-{% block title %}Créer un site{% endblock %}
+{% block title %}{{ 'Modifier' if site else 'Créer' }} un site{% endblock %}
 
 {% block extra_styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/super_admin/create_site.css') }}">
 {% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <h2>Créer un nouveau site</h2>
-    <form method="POST" action="" enctype="multipart/form-data">
+<div class="site-form-container">
+    <h2>{{ 'Modifier' if site else 'Créer' }} un site{% if site %}: {{ site.name }}{% endif %}</h2>
+    <form method="POST" class="site-form">
         {{ form.hidden_tag() }}
 
-        <div class="mb-3">
+        <div class="form-group">
             {{ form.name.label(class="form-label") }}
-            {{ form.name(class="form-control", placeholder="Nom du site") }}
+            {{ form.name(class="form-control") }}
             {% for error in form.name.errors %}
                 <div class="text-danger">{{ error }}</div>
             {% endfor %}
         </div>
 
-        <button type="submit" class="btn btn-primary">{{ form.submit.label.text }}</button>
+        <div class="form-group">
+            {{ form.slug.label(class="form-label") }}
+            {{ form.slug(class="form-control") }}
+            {% for error in form.slug.errors %}
+                <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+        </div>
+
+        <div class="form-group">
+            {{ form.sub_admin_id.label(class="form-label") }}
+            {{ form.sub_admin_id(class="form-select") }}
+            {% for error in form.sub_admin_id.errors %}
+                <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+        </div>
+
+        <div class="form-buttons">
+            <button type="submit" class="btn btn-success">{{ form.submit.label.text }}</button>
+            <a href="{{ url_for('super_admin.dashboard') }}" class="btn btn-secondary">Annuler</a>
+        </div>
     </form>
 </div>
 {% endblock %}

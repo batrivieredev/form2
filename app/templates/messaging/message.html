@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block extra_styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/messaging/inbox.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="messaging view-message">
+    <h2>{{ message.subject }}</h2>
+    <p><strong>De :</strong> {{ message.from }}</p>
+    <p class="message-body">{{ message.body }}</p>
+    <p><strong>Date :</strong> {{ message.date.strftime("%d/%m/%Y %H:%M") }}</p>
+    <a href="{{ url_for('messaging.inbox') }}" class="back-link">Retour à l'inbox</a>
+</div>
+{% endblock %}

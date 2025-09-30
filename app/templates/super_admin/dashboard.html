@@ -7,74 +7,71 @@
 {% endblock %}
 
 {% block content %}
-<h1>Super Admin Dashboard</h1>
+<div id="super-admin-dashboard">
+    <h1>Super Admin Dashboard</h1>
 
-<section>
-    <h2>Sites gérés</h2>
-    <a href="{{ url_for('super_admin.create_site') }}" class="btn btn-primary">Créer un nouveau site</a>
-    <table class="dashboard-table">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Nom du site</th>
-                <th>Sous-admin(s)</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-        {% for site in sites %}
-            <tr>
-                <td>{{ site.id }}</td>
-                <td>{{ site.name }}</td>
-                <td>
-                    {% for sub in site.sub_admins %}
-                        {{ sub.username }} ({{ sub.email }})<br>
-                    {% endfor %}
-                </td>
-                <td>
-                    <a href="{{ url_for('super_admin.view_site', site_id=site.id) }}" class="btn btn-secondary">Voir</a>
-                    <a href="{{ url_for('super_admin.edit_site', site_id=site.id) }}" class="btn btn-warning">Modifier</a>
-                    <form method="POST" action="{{ url_for('super_admin.delete_site', site_id=site.id) }}" style="display:inline">
-                        <button type="submit" class="btn btn-danger" onclick="return confirm('Supprimer ce site ?');">Supprimer</button>
-                    </form>
-                </td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-</section>
+    <section>
+        <h2>Sites gérés</h2>
+        <a href="{{ url_for('super_admin.create_site') }}" class="btn btn-primary mb-3">Créer un nouveau site</a>
+        <table class="dashboard-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nom du site</th>
+                    <th>Sous-admin</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for site in sites %}
+                <tr>
+                    <td>{{ site.id }}</td>
+                    <td>{{ site.name }}</td>
+                    <td>{{ site.sub_admin.username if site.sub_admin else "Aucun" }}</td>
+                    <td>
+                        <a href="{{ url_for('super_admin.edit_site', site_id=site.id) }}" class="btn btn-warning">Modifier</a>
+                        <form method="POST" action="{{ url_for('super_admin.delete_site', site_id=site.id) }}" style="display:inline">
+                            <button type="submit" class="btn btn-danger" onclick="return confirm('Supprimer ce site ?');">Supprimer</button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </section>
 
-<section>
-    <h2>Utilisateurs</h2>
-    <a href="{{ url_for('super_admin.create_user') }}" class="btn btn-primary">Créer un utilisateur</a>
-    <table class="dashboard-table">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Nom / Prénom</th>
-                <th>Email</th>
-                <th>Rôle</th>
-                <th>Site assigné</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-        {% for user in users %}
-            <tr>
-                <td>{{ user.id }}</td>
-                <td>{{ user.username }}</td>
-                <td>{{ user.email }}</td>
-                <td>{{ user.role }}</td>
-                <td>{{ user.site.name if user.site else "Aucun" }}</td>
-                <td>
-                    <a href="{{ url_for('super_admin.edit_user', user_id=user.id) }}" class="btn btn-warning">Modifier</a>
-                    <form method="POST" action="{{ url_for('super_admin.delete_user', user_id=user.id) }}" style="display:inline">
-                        <button type="submit" class="btn btn-danger" onclick="return confirm('Supprimer cet utilisateur ?');">Supprimer</button>
-                    </form>
-                </td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-</section>
+    <section class="mt-5">
+        <h2>Utilisateurs</h2>
+        <a href="{{ url_for('super_admin.create_user') }}" class="btn btn-primary mb-3">Créer un utilisateur</a>
+        <table class="dashboard-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nom</th>
+                    <th>Email</th>
+                    <th>Rôle</th>
+                    <th>Site assigné</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for user in users %}
+                <tr>
+                    <td>{{ user.id }}</td>
+                    <td>{{ user.username }}</td>
+                    <td>{{ user.email }}</td>
+                    <td>{{ user.role }}</td>
+                    <td>{{ user.site.name if user.site else "Aucun" }}</td>
+                    <td>
+                        <a href="{{ url_for('super_admin.edit_user', user_id=user.id) }}" class="btn btn-warning">Modifier</a>
+                        <form method="POST" action="{{ url_for('super_admin.delete_user', user_id=user.id) }}" style="display:inline">
+                            <button type="submit" class="btn btn-danger" onclick="return confirm('Supprimer cet utilisateur ?');">Supprimer</button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </section>
+</div>
 {% endblock %}

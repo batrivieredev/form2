@@ -1,6 +1,6 @@
-/* dashboard.css spécifique, ne touche pas au style global */
+/* dashboard.css spécifique au Super Admin Dashboard */
 
-.dashboard-table {
+#super-admin-dashboard .dashboard-table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 15px;
@@ -8,26 +8,26 @@
     color: #ffffff;
 }
 
-.dashboard-table th,
-.dashboard-table td {
+#super-admin-dashboard .dashboard-table th,
+#super-admin-dashboard .dashboard-table td {
     border: 1px solid #333;
     padding: 10px;
     text-align: left;
 }
 
-.dashboard-table th {
+#super-admin-dashboard .dashboard-table th {
     background-color: #272727;
 }
 
-.dashboard-table tr:nth-child(even) {
+#super-admin-dashboard .dashboard-table tr:nth-child(even) {
     background-color: #2a2a2a;
 }
 
-.dashboard-table tr:hover {
+#super-admin-dashboard .dashboard-table tr:hover {
     background-color: #3a3a3a;
 }
 
-.btn {
+#super-admin-dashboard .btn {
     padding: 5px 10px;
     border: none;
     border-radius: 4px;
@@ -38,39 +38,40 @@
     color: #fff;
 }
 
-.btn-primary {
+#super-admin-dashboard .btn-primary {
     background-color: #00b8b8;
 }
 
-.btn-primary:hover {
+#super-admin-dashboard .btn-primary:hover {
     background-color: #00ffff;
 }
 
-.btn-secondary {
+#super-admin-dashboard .btn-secondary {
     background-color: #555;
 }
 
-.btn-secondary:hover {
+#super-admin-dashboard .btn-secondary:hover {
     background-color: #777;
 }
 
-.btn-warning {
+#super-admin-dashboard .btn-warning {
     background-color: #ff9800;
 }
 
-.btn-warning:hover {
+#super-admin-dashboard .btn-warning:hover {
     background-color: #ffa733;
 }
 
-.btn-danger {
+#super-admin-dashboard .btn-danger {
     background-color: #f44336;
 }
 
-.btn-danger:hover {
+#super-admin-dashboard .btn-danger:hover {
     background-color: #f66;
 }
 
-h1, h2 {
+#super-admin-dashboard h1,
+#super-admin-dashboard h2 {
     color: #00ffff;
     margin-top: 20px;
 }

@@ -33,6 +33,7 @@ class DossierForm(FlaskForm):
 
 class SiteForm(FlaskForm):
     name = StringField("Nom du site", validators=[DataRequired(), Length(min=2, max=100)])
+    slug = StringField("Slug du site (URL friendly)", validators=[DataRequired(), Length(min=2, max=100)])
     sub_admin_id = SelectField("Sous-admin", coerce=int, choices=[])
     submit = SubmitField("Valider")
 
@@ -40,6 +41,6 @@ class UserForm(FlaskForm):
     username = StringField("Nom d'utilisateur", validators=[DataRequired(), Length(min=2, max=50)])
     email = StringField("Email", validators=[DataRequired(), Email()])
     password = PasswordField("Mot de passe", validators=[Optional(), Length(min=6)])
-    role = SelectField("Rôle", choices=[('sub_admin', 'Sous-admin'), ('user', 'Utilisateur')], validators=[DataRequired()])
-    site = SelectField("Site", coerce=int, validators=[DataRequired()])
+    role = SelectField("Rôle", choices=[('super_admin', 'Super Admin'), ('sub_admin', 'Sous-admin'), ('user', 'Utilisateur')], validators=[DataRequired()])
+    site_id = SelectField("Site", coerce=int, choices=[], validators=[Optional()])
     submit = SubmitField("Valider")

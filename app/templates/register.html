@@ -21,28 +21,35 @@
 
     <form method="POST" class="register-form">
         {{ form.hidden_tag() }}
+
         <div class="form-group">
-            {{ form.username.label }}<br>
-            {{ form.username(class="form-control") }}
+            {{ form.username.label(class="form-label") }}
+            {{ form.username(class="form-control", placeholder="Nom d'utilisateur") }}
         </div>
+
         <div class="form-group">
-            {{ form.email.label }}<br>
-            {{ form.email(class="form-control") }}
+            {{ form.email.label(class="form-label") }}
+            {{ form.email(class="form-control", placeholder="Email") }}
         </div>
+
         <div class="form-group">
-            {{ form.password.label }}<br>
-            {{ form.password(class="form-control") }}
+            {{ form.password.label(class="form-label") }}
+            {{ form.password(class="form-control", placeholder="Mot de passe") }}
         </div>
+
         <div class="form-group">
-            {{ form.confirm_password.label }}<br>
-            {{ form.confirm_password(class="form-control") }}
+            {{ form.confirm_password.label(class="form-label") }}
+            {{ form.confirm_password(class="form-control", placeholder="Confirmer le mot de passe") }}
         </div>
+
         <div class="form-group">
             {{ form.submit(class="btn btn-primary") }}
         </div>
     </form>
 
-    <p>Déjà inscrit ? <a href="{{ url_for('user.login') }}">Connectez-vous ici</a></p>
+    <p>Déjà inscrit ?
+        <a href="{{ url_for('user.login', slug=site.slug if site else None) }}">Connectez-vous ici</a>
+    </p>
 </div>
 {% endblock %}
 

@@ -36,3 +36,7 @@ with app.app_context():
     print("Chemin DB :", app.config['SQLALCHEMY_DATABASE_URI'])
     print("Tables :", db.inspect(db.engine).get_table_names())
     print("Utilisateurs :", [u.username for u in User.query.all()])
+
+    # Exemple pour vérifier la colonne slug dans Site
+    site_columns = db.inspect(db.engine).get_columns('site')
+    print("Colonnes site :", [col['name'] for col in site_columns])
