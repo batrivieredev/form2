@@ -8,8 +8,21 @@
 <div class="messaging">
     <h2>Composer un message</h2>
     <form method="POST" class="compose-form">
-        <label>De :</label>
-        <input type="text" name="from" required>
+
+        <label>Destinataire :</label>
+        <select name="recipient_id" required>
+            <option value="">-- Sélectionnez un destinataire --</option>
+
+            {% for role, users in roles_dict.items() %}
+                {% if users %}
+                    <optgroup label="{{ role.replace('_', ' ').title() }}">
+                        {% for u in users %}
+                            <option value="{{ u.id }}">{{ u.username }}</option>
+                        {% endfor %}
+                    </optgroup>
+                {% endif %}
+            {% endfor %}
+        </select>
 
         <label>Objet :</label>
         <input type="text" name="subject" required>

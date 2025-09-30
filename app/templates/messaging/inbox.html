@@ -21,12 +21,17 @@
             </thead>
             <tbody>
                 {% for msg in messages %}
-                <tr class="{{ 'unread' if msg.get('unread', False) else '' }}">
+                <tr class="{{ 'unread' if msg.unread else '' }}">
                     <td>{{ msg.id }}</td>
                     <td><a href="{{ url_for('messaging.view_message', msg_id=msg.id) }}">{{ msg.subject }}</a></td>
-                    <td>{{ msg.from }}</td>
-                    <td>{{ msg.date.strftime("%d/%m/%Y %H:%M") }}</td>
-                    <td><a href="{{ url_for('messaging.view_message', msg_id=msg.id) }}" class="btn btn-secondary">Voir</a></td>
+                    <td>{{ msg.sender.username }}</td>
+                    <td>{{ msg.timestamp.strftime("%d/%m/%Y %H:%M") }}</td>
+                    <td>
+                        <a href="{{ url_for('messaging.view_message', msg_id=msg.id) }}" class="btn btn-secondary">Voir</a>
+                        <form action="{{ url_for('messaging.delete_message', msg_id=msg.id) }}" method="POST" style="display:inline;">
+                            <button type="submit" class="btn btn-secondary" onclick="return confirm('Supprimer ce message ?')">Supprimer</button>
+                        </form>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>

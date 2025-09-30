@@ -7,10 +7,13 @@
     box-shadow: 0 4px 15px rgba(0,0,0,0.3);
     color: #fff;
     font-family: 'Segoe UI', Tahoma, sans-serif;
-    overflow-x: auto; /* empêche le débordement */
+    overflow-x: auto;
 }
 
-h2 { color: #00ffff; margin-bottom: 20px; }
+h2 {
+    color: #00ffff;
+    margin-bottom: 20px;
+}
 
 .table-container {
     overflow-x: auto;
@@ -30,11 +33,19 @@ h2 { color: #00ffff; margin-bottom: 20px; }
     text-align: left;
 }
 
-.message-table th { background-color: #1e1e2f; color: #00ffff; }
+.message-table th {
+    background-color: #1e1e2f;
+    color: #00ffff;
+}
 
-.message-table tr.unread td { font-weight: bold; background-color: #2b2b42; }
+.message-table tr.unread td {
+    font-weight: bold;
+    background-color: #2b2b42;
+}
 
-.message-table tr:hover td { background-color: #3a3a5a; }
+.message-table tr:hover td {
+    background-color: #3a3a5a;
+}
 
 .compose-form {
     display: flex;
@@ -55,11 +66,34 @@ h2 { color: #00ffff; margin-bottom: 20px; }
     color: #fff;
 }
 
-.btn-primary { background-color: #00b8b8; color: #fff; text-align: center; }
-.btn-primary:hover { background-color: #00ffff; }
-.btn-secondary { background-color: #555; color: #fff; text-align: center; }
-.btn-secondary:hover { background-color: #777; }
+.btn-primary {
+    background-color: #00b8b8;
+    color: #fff;
+    text-align: center;
+}
+.btn-primary:hover {
+    background-color: #00ffff;
+}
 
-.back-link { display: inline-block; margin-top: 15px; color: #00ffff; text-decoration: none; }
+.btn-secondary {
+    background-color: #555;
+    color: #fff;
+    text-align: center;
+}
+.btn-secondary:hover {
+    background-color: #777;
+}
 
-.view-message .message-body { margin-top: 15px; padding: 15px; background-color: #2b2b42; border-radius: 8px; }
+.back-link {
+    display: inline-block;
+    margin-top: 15px;
+    color: #00ffff;
+    text-decoration: none;
+}
+
+.view-message .message-body {
+    margin-top: 15px;
+    padding: 15px;
+    background-color: #2b2b42;
+    border-radius: 8px;
+}

@@ -116,3 +116,44 @@ def site_register(slug):
         flash("Inscription réussie !", "success")
         return redirect(url_for('user.site_login', slug=slug))
     return render_template('user/register.html', form=form, site=site)
+
+@user_bp.route('/dossier/submit', methods=['GET', 'POST'])
+@login_required
+def submit_dossier():
+    form = DossierForm()
+    if form.validate_on_submit():
+        # Créer le dossier
+        new_dossier = Dossier(
+            first_name=form.first_name.data,
+            last_name=form.last_name.data,
+            email=form.email.data,
+            job_type=form.job_type.data,
+            site_id=form.site.data.id,  # selon comment ton SelectField renvoie le site
+            user_id=current_user.id
+        )
+        db.session.add(new_dossier)
+        db.session.commit()
+
+        # Gérer les fichiers uploadés
+        files = request.files.getlist(form.files.name)
+        upload_folder = os.path.join(current_app.root_path, 'uploads')
+        os.makedirs(upload_folder, exist_ok=True)
+
+        for f in files:
+            if f.filename:
+                filename = secure_filename(f.filename)
+                filepath = os.path.join(upload_folder, filename)
+                f.save(filepath)
+                # Ajouter en base
+                file_record = File(
+                    filename=filename,
+                    path=filepath,
+                    dossier_id=new_dossier.id
+                )
+                db.session.add(file_record)
+
+        db.session.commit()
+        flash("Dossier soumis avec succès !", "success")
+        return redirect(url_for('user.home'))
+
+    return render_template('user/submit_dossier.html', form=form)

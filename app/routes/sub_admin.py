@@ -3,9 +3,8 @@ from flask_login import login_required, current_user
 from app import db
 from app.models import User, Dossier, Site
 
-sub_admin_bp = Blueprint('sub_admin', __name__)  # plus besoin de template_folder
+sub_admin_bp = Blueprint('sub_admin', __name__)
 
-# Vérifie que l'utilisateur est un sous-admin
 def sub_admin_required(func):
     from functools import wraps
     @wraps(func)
@@ -15,16 +14,17 @@ def sub_admin_required(func):
         return func(*args, **kwargs)
     return wrapper
 
-# Dashboard sous-admin
 @sub_admin_bp.route('/', methods=['GET'])
 @login_required
 @sub_admin_required
 def dashboard():
     site = Site.query.get(current_user.site_id)
-    dossiers = Dossier.query.filter(Dossier.site_id == site.id).all()
+    if not site:
+        flash("Aucun site assigné à votre compte. Contactez le super-admin.", "warning")
+        return redirect(url_for('user.home'))
+    dossiers = Dossier.query.filter_by(site_id=site.id).all()
     return render_template('sub_admin/dashboard.html', site=site, dossiers=dossiers)
 
-# Voir un dossier en détail
 @sub_admin_bp.route('/dossier/<int:dossier_id>', methods=['GET'])
 @login_required
 @sub_admin_required
@@ -34,7 +34,6 @@ def view_dossier(dossier_id):
         abort(403)
     return render_template('sub_admin/view_dossier.html', dossier=dossier)
 
-# Modifier le statut d'un dossier
 @sub_admin_bp.route('/dossier/<int:dossier_id>/status', methods=['POST'])
 @login_required
 @sub_admin_required
@@ -49,7 +48,6 @@ def update_status(dossier_id):
         flash("Statut du dossier mis à jour.", "success")
     return redirect(url_for('sub_admin.dashboard'))
 
-# Recherche dossiers
 @sub_admin_bp.route('/search', methods=['GET'])
 @login_required
 @sub_admin_required
@@ -64,7 +62,6 @@ def search():
     site = Site.query.get(site_id)
     return render_template('sub_admin/dashboard.html', site=site, dossiers=dossiers)
 
-# Réinitialiser mot de passe utilisateur
 @sub_admin_bp.route('/user/<int:user_id>/reset_password', methods=['POST'])
 @login_required
 @sub_admin_required
@@ -79,7 +76,6 @@ def reset_user_password(user_id):
         flash("Mot de passe réinitialisé.", "success")
     return redirect(url_for('sub_admin.dashboard'))
 
-# Supprimer un dossier
 @sub_admin_bp.route('/dossier/<int:dossier_id>/delete', methods=['POST'])
 @login_required
 @sub_admin_required

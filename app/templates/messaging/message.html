@@ -7,9 +7,10 @@
 {% block content %}
 <div class="messaging view-message">
     <h2>{{ message.subject }}</h2>
-    <p><strong>De :</strong> {{ message.from }}</p>
+    <p><strong>De :</strong> {{ message.sender.username }}</p>
+    <p><strong>À :</strong> {{ message.recipient.username }}</p>
     <p class="message-body">{{ message.body }}</p>
-    <p><strong>Date :</strong> {{ message.date.strftime("%d/%m/%Y %H:%M") }}</p>
+    <p><strong>Date :</strong> {{ message.timestamp.strftime("%d/%m/%Y %H:%M") }}</p>
     <a href="{{ url_for('messaging.inbox') }}" class="back-link">Retour à l'inbox</a>
 </div>
 {% endblock %}
